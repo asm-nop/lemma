@@ -20,7 +20,7 @@ use risc0_zkvm::sha::{Impl, Sha256};
 fn main() {
     let inputs: Inputs = env::read();
 
-    let statement = inputs.theorem_template + "\n" + &inputs.solution;
+    let statement = inputs.theorem + "\n" + &inputs.solution;
 
     let sha = *Impl::hash_bytes(statement.as_bytes());
 
@@ -31,7 +31,7 @@ fn main() {
     // Commit the journal that will be received by the application contract.
     // Journal is encoded using Solidity ABI for easy decoding in the app contract.
     let outputs = Outputs {
-        solution_hash: sha,
+        solution_hash: sha.as_bytes().try_into().unwrap(),
         sender: inputs.sender,
     };
     env::commit(&outputs);

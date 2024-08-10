@@ -58,6 +58,7 @@ contract Lemma {
         address creator;
         uint256 challengeId;
         string theorem;
+        string challengeName;
         uint256 bounty;
         uint256 expirationTimestamp;
     }
@@ -99,9 +100,9 @@ contract Lemma {
 
     /// @dev note that theorem is theorem template
     function createChallenge(
+        string calldata challengeName,
         string calldata theorem,
-        uint256 expirationTimestamp,
-        uint256 bounty
+        uint256 expirationTimestamp
     ) public payable returns (uint256) {
         if (expirationTimestamp < block.timestamp + minimumChallengeDuration) {
             revert MinimumChallengeDuration();
@@ -117,7 +118,8 @@ contract Lemma {
             msg.sender,
             challengeId,
             theorem,
-            bounty,
+            challengeName,
+            msg.value,
             expirationTimestamp
         );
 

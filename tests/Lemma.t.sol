@@ -52,22 +52,29 @@ contract LemmaTest is RiscZeroCheats, Test {
 
     function test_createChallenge() public {
         vm.deal(address(this), type(uint128).max);
+        string memory challengeName = "And Commutativity";
         string
             memory theorem = "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C def and_comm (A B: Prop): (And A B) -> (And B A) := ";
 
         uint256 expirationTimestamp = vm.getBlockTimestamp() + 1 days;
         uint256 bounty = 1 ether;
 
-        uint256 challengeId = lemma.createChallenge(
+        uint256 challengeId = lemma.createChallenge{value: bounty}(
             theorem,
-            expirationTimestamp,
-            bounty
+            challengeName,
+            expirationTimestamp
         );
 
         // TODO: check effects
         Lemma.Challenge memory challenge = lemma.getChallenge(challengeId);
 
-        // asserteq();
+        assertEq(challenge.challengeId, challengeId);
+        assertEq(challenge.theorem, theorem);
+        assertEq(challenge.bounty, bounty);
+        assertEq(challenge.expirationTimestamp, expirationTimestamp);
+        assertEq(challenge.challengeName, challengeName);
+
+        assertEq(address(lemma).balance, bounty);
     }
 
     // TODO: if time test fail to create challenge

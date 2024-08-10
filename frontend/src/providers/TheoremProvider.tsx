@@ -10,17 +10,21 @@ import { useSDK } from "@metamask/sdk-react";
 
 // Define the shape of a theorem
 interface Theorem {
+  creator: string;
   challengeId: bigint;
-  prompt: string;
+  challengeName: string;
+  theorem: string;
   bounty: bigint;
+  expirationTimestamp: bigint;
 }
 
 // Define the shape of our context
 interface TheoremContextType {
   theorems: Map<bigint, Theorem>;
-  fetchTheorem: (id: bigint) => Promise<Theorem | null>;
   account: string | null;
   connectWallet: () => Promise<void>;
+
+  submit: () => Promise<void>;
 }
 
 // Create the context
@@ -30,7 +34,7 @@ const TheoremContext = createContext<TheoremContextType | undefined>(undefined);
 const ABI: string[] = [
   // Add your contract ABI here
   "function challengeNonce() public view returns (uint256)",
-  "function challenges(uint256 nonce) public view returns (address, uint256, string, uint256, uint256)",
+  "function challenges(uint256 nonce) public view returns (address,uint256,string,string,uint256,uint256)",
 ];
 
 // Address of your deployed contract
@@ -76,21 +80,6 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     return new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
   };
 
-  const fetchTheorem = async (id: bigint): Promise<Theorem | null> => {
-    try {
-      const contract = await getContract();
-      const challenge = await contract.challenges(id);
-      return {
-        challengeId: id,
-        prompt: challenge[2],
-        bounty: challenge[3],
-      };
-    } catch (error) {
-      console.error("Error fetching theorem:", error);
-      return null;
-    }
-  };
-
   const updateTheorems = async () => {
     try {
       const contract = await getContract();
@@ -103,10 +92,16 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
       let fetchedTheorems = new Map<bigint, Theorem>();
       for (let n = BigInt(0); n < lastChallengeNonce; n++) {
         const challenge = await contract.challenges(n);
+
+        console.log(challenge);
+
         fetchedTheorems.set(n, {
-          challengeId: n,
-          prompt: challenge[2],
-          bounty: challenge[3],
+          creator: challenge[0],
+          challengeId: challenge[1],
+          theorem: challenge[2],
+          challengeName: challenge[3],
+          bounty: challenge[4],
+          expirationTimestamp: challenge[5],
         });
       }
 
@@ -124,9 +119,9 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
 
   const contextValue: TheoremContextType = {
     theorems,
-    fetchTheorem,
     account,
     connectWallet,
+    submit: async () => {}
   };
 
   return (

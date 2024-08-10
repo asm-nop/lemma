@@ -47,7 +47,7 @@ const TheoremDetail = () => {
   }
 
   const title = "Logical AND Commutativity";
-  let prompt = theorem.prompt;
+  let prompt = theorem.theorem;
   prompt = prompt.replace(/\\n/g, "\n");
 
   const bounty = ethers.formatEther(theorem.bounty);

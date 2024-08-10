@@ -30,15 +30,13 @@ contract Lemma {
         verifier = _verifier;
     }
 
-    uint256 challengeNonce;
+    uint256 challengeNonce = 0;
     uint256 minimumBounty;
     uint256 minimumChallengeDuration;
 
     event ChallengeCreated(
         uint256 challengeId,
-        bytes32 imageId,
-        bytes32 solutionHash,
-        uint256 expiration,
+        uint256 expirationTimestamp,
         address sender
     );
 
@@ -46,26 +44,30 @@ contract Lemma {
 
     //TODO: pack this struct
     struct Challenge {
-        uint32 challengeId;
+        uint256 challengeId;
         string prompt;
-        uint128 bounty;
+        uint256 bounty;
         uint128 expirationTimestamp;
         address creator;
     }
 
-    error ChallengeExpired();
     error ChallengeNotExpired();
     error MinimumBounty();
+    error MinBountyNotSatisfied();
     error MinimumChallengeDuration();
     error MsgSenderIsNotChallengeCreator();
 
     /// @notice Challenge nonce to challenge
-    //TODO: make this public
     mapping(uint256 => Challenge) public challenges;
+
+    /// @notice The current first active challenge nonce/id
+    uint256 public firstActiveChallengeId = 0;
+    uint256 public numActiveChallenges = 0;
 
     function createChallenge(
         string calldata prompt,
-        uint128 expirationTimestamp
+        uint128 expirationTimestamp,
+        uint256 bounty
     ) public payable {
         if (expirationTimestamp < block.timestamp + minimumChallengeDuration) {
             revert MinimumChallengeDuration();
@@ -89,9 +91,7 @@ contract Lemma {
 
         emit ChallengeCreated(
             challengeId,
-            imageId,
-            solutionHash,
-            expiration,
+            expirationTimestamp,
             msg.sender
         );
     }

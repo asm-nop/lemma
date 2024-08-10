@@ -2487,6 +2487,7 @@ dependencies = [
  "risc0-build-ethereum",
  "risc0-zkp",
  "risc0-zkvm",
+ "serde",
 ]
 
 [[package]]

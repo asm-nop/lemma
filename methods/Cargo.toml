@@ -6,6 +6,10 @@ edition = { workspace = true }
 [package.metadata.risc0]
 methods = ["guest"]
 
+[dependencies]
+risc0-zkvm = { version = "1.0", default-features = false, features = ['std'] }
+serde = { version = "1", features = ["derive"] }
+
 [build-dependencies]
 hex = { workspace = true }
 risc0-build = { workspace = true }

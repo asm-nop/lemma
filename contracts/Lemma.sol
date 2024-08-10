@@ -42,6 +42,9 @@ contract Lemma {
         address sender
     );
 
+    event ChallengeExpired(uint256 challengeId);
+
+    //TODO: pack this struct
     struct Challenge {
         uint32 challengeId;
         string prompt;
@@ -51,15 +54,17 @@ contract Lemma {
     }
 
     error ChallengeExpired();
+    error ChallengeNotExpired();
     error MinimumBounty();
     error MinimumChallengeDuration();
+    error MsgSenderIsNotChallengeCreator();
 
     /// @notice Challenge nonce to challenge
     //TODO: make this public
     mapping(uint256 => Challenge) public challenges;
 
     function createChallenge(
-        string memory prompt,
+        string calldata prompt,
         uint128 expirationTimestamp
     ) public payable {
         if (expirationTimestamp < block.timestamp + minimumChallengeDuration) {
@@ -89,6 +94,31 @@ contract Lemma {
             expiration,
             msg.sender
         );
+    }
+
+    // TODO: add non reentrant
+    function reclaimBounty(uint256 challengeId) public {
+        Challenge memory challenge = challenges[challengeId];
+
+        // TODO: check if challenge exists
+
+        if (challenge.creator != msg.sender) {
+            revert MsgSenderIsNotChallengeCreator();
+        }
+
+        if (challenge.expirationTimestamp < block.timestamp) {
+            revert ChallengeNotExpired();
+        }
+
+        // TODO: remove challenge before sending ether to avoid reentrancy
+
+        emit ChallengeExpired(challengeId);
+
+        // TODO: safeTransfer(msg.sender, challenge.bounty);
+    }
+
+    function removeChallenge(uint256 challengeId) internal {
+        delete challenges[challengeId];
     }
 
     //TODO: some function to get your eth back if you created a challenge and no one solved it in time

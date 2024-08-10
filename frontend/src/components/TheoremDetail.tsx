@@ -41,8 +41,7 @@ const TheoremDetail = () => {
   }
 
   const title = theorem.challengeName;
-  let prompt = theorem.theorem;
-  prompt = prompt.replace(/\\n/g, "\n");
+  const prompt = theorem.theorem;
 
   const bounty = ethers.formatEther(theorem.bounty);
 

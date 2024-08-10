@@ -12,28 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use core::{Inputs, Outputs};
 use mini_proost::process_input;
 use risc0_zkvm::guest::env;
-use risc0_zkvm::sha::{Digest, Impl, Sha256};
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-pub struct Inputs {
-    sender: String,
-    theorem_template: String,
-    solution: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Outputs {
-    sender: String,
-    solution_hash: Digest,
-}
+use risc0_zkvm::sha::{Impl, Sha256};
 
 fn main() {
     let inputs: Inputs = env::read();
 
-    let statement = inputs.theorem_template + &inputs.solution;
+    let statement = inputs.theorem_template + "\n" + &inputs.solution;
 
     let sha = *Impl::hash_bytes(statement.as_bytes());
 

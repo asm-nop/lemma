@@ -16,29 +16,13 @@
 
 include!(concat!(env!("OUT_DIR"), "/methods.rs"));
 
-use risc0_zkvm::sha::Digest;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-pub struct Inputs {
-    sender: String,
-    theorem_template: String,
-    solution: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Outputs {
-    sender: String,
-    solution_hash: Digest,
-}
-
 #[cfg(test)]
 mod tests {
     use alloy_primitives::U256;
     use alloy_sol_types::SolValue;
     use risc0_zkvm::{default_executor, ExecutorEnv};
 
-    use crate::Inputs;
+    use core::{Inputs, Outputs};
 
     #[test]
     fn proves_valid_theorem() {

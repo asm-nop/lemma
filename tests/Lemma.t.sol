@@ -8,6 +8,7 @@ import {Test} from "forge-std/Test.sol";
 import {Lemma} from "../contracts/Lemma.sol";
 import {IRiscZeroVerifier} from "risc0/IRiscZeroVerifier.sol";
 import {Elf} from "./Elf.sol"; // auto-generated contract after running `cargo build`.
+import {ILemma} from "interfaces/ILemma.sol";
 
 contract LemmaTest is RiscZeroCheats, Test {
     Lemma public lemma;
@@ -78,7 +79,7 @@ contract LemmaTest is RiscZeroCheats, Test {
 
     // TODO: if time test fail to create challenge
 
-    function submitAndCommuntativityChallenge() {
+    function submitAndCommuntativityChallenge() public {
         vm.deal(address(this), type(uint128).max);
         string memory challengeName = "And Commutativity";
         string
@@ -104,8 +105,19 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(address(lemma).balance, bounty);
     }
 
-    function test_submitSolution() {
+    function test_submitSolution() public {
         submitAndCommuntativityChallenge();
+
+        ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
+            sender: address(this),
+            theorem: "And Commutativity",
+            solution: "def and_comm (A B: Prop): (And A B) -> (And B A) := "
+        });
+
+        (bytes memory journal, bytes memory seal) = prove(
+            Elf.LEMMA_PATH,
+            abi.encode(inputs)
+        );
 
         // TODO: get proof
     }

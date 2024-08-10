@@ -44,12 +44,11 @@ mod tests {
     fn proves_valid_theorem() {
         let inputs = Inputs {
             sender: "0x1234".to_string(),
-            theorem_template: r#"def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
+            theorem_template: r#"
+                def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
 
-def and_comm (A B: Prop): (And A B) -> (And B A) :=
-  fun f: (And A B), C: Prop, bac: (B -> A -> C) => f C (fun a:A, b:B => bac b a)"#
-                .to_string(),
-            solution: "".to_string(),
+                def and_comm (A B: Prop): (And A B) -> (And B A) := "#.to_string(),
+            solution: "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)".to_string(),
         };
 
         let env = ExecutorEnv::builder()

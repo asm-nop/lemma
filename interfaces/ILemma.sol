@@ -19,6 +19,10 @@ interface ILemma {
         uint256 challengeId
     ) external view returns (Lemma.Challenge memory);
 
+    function getSolution(
+        uint256 challengeId
+    ) external view returns (Lemma.Solution memory);
+
     function createChallenge(
         string calldata challengeName,
         string calldata theorem,

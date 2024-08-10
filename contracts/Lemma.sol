@@ -92,6 +92,12 @@ contract Lemma {
         return challenges[challengeId];
     }
 
+    function getSolution(
+        uint256 challengeId
+    ) public view returns (Solution memory) {
+        return solutions[challengeId];
+    }
+
     function getChallengeNonce() public view returns (uint256) {
         return challengeNonce;
     }
@@ -149,7 +155,7 @@ contract Lemma {
             revert SolutionAlreadyExists(solutionExpirationTimestamp);
         }
 
-        bytes memory journal = abi.encode(solutionHash, msg.sender);
+        bytes memory journal = abi.encode(msg.sender, solutionHash);
         verifier.verify(seal, imageId, sha256(journal));
 
         solutions[challengeId] = Solution(

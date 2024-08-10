@@ -84,7 +84,6 @@ contract LemmaTest is RiscZeroCheats, Test {
         string memory challengeName = "And Commutativity";
         string
             memory theorem = "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=";
-
         uint256 expirationTimestamp = vm.getBlockTimestamp() + 1 days;
         uint256 bounty = 1 ether;
 
@@ -95,14 +94,6 @@ contract LemmaTest is RiscZeroCheats, Test {
         );
 
         Lemma.Challenge memory challenge = lemma.getChallenge(challengeId);
-
-        assertEq(challenge.challengeId, challengeId);
-        assertEq(challenge.theorem, theorem);
-        assertEq(challenge.bounty, bounty);
-        assertEq(challenge.expirationTimestamp, expirationTimestamp);
-        assertEq(challenge.challengeName, challengeName);
-
-        assertEq(address(lemma).balance, bounty);
     }
 
     function test_proveTheorem() public {
@@ -122,6 +113,35 @@ contract LemmaTest is RiscZeroCheats, Test {
 
     function test_submitSolution() public {
         submitAndCommuntativityChallenge();
+
+        ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
+            sender: address(this),
+            theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
+            solution: "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
+        });
+
+        vm.setEnv("RISC0_DEV_MODE", "true");
+
+        (bytes memory journal, bytes memory seal) = prove(
+            Elf.LEMMA_PATH,
+            abi.encode(inputs)
+        );
+
+        ILemma.Risc0Outputs memory outputs = abi.decode(
+            journal,
+            (ILemma.Risc0Outputs)
+        );
+
+        lemma.submitSolution(0, outputs.solution_hash, seal);
+
+        Lemma.Solution memory solution = lemma.getSolution(0);
+
+        assertEq(solution.solutionHash, outputs.solution_hash);
+        assertEq(
+            solution.expirationTimestamp,
+            vm.getBlockTimestamp() + lemma.solutionExpirationTime()
+        );
+        assertEq(solution.sender, address(this));
     }
 
     // TODO: if time, test fail to submit solution

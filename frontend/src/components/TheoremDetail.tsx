@@ -8,7 +8,10 @@ import { Alert, AlertDescription } from "./ui/alert.tsx";
 const TheoremDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const [proofCode, setProofCode] = useState("");
-  const [proofResult, setProofResult] = useState<{ valid: boolean; proof?: string } | null>(null);
+  const [proofResult, setProofResult] = useState<{
+    valid: boolean;
+    proof?: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   if (!slug) {
@@ -48,22 +51,22 @@ const TheoremDetail = () => {
     setIsLoading(true);
     try {
       // Send the proof to the remote prover
-      const response = await fetch('https://api.example.com/prover', {
-        method: 'POST',
+      const response = await fetch("https://api.example.com/prover", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ theorem: theorem.theorem, proof: proofCode }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to verify proof');
+        throw new Error("Failed to verify proof");
       }
 
       const result = await response.json();
       setProofResult(result);
     } catch (error) {
-      console.error('Error verifying proof:', error);
+      console.error("Error verifying proof:", error);
       setProofResult({ valid: false });
     } finally {
       setIsLoading(false);
@@ -74,28 +77,21 @@ const TheoremDetail = () => {
     <div className="max-w-2xl mx-auto mt-8 bg-white shadow-lg rounded-lg overflow-hidden">
       <div className="px-6 py-4">
         <h1 className="text-2xl font-bold mb-2">{title}</h1>
-        <p className="text-gray-600 mb-4">Theorem #{slug}</p>
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Prompt:</h3>
+          <span className="text-lg">Bounty:</span>{" "}
+          <span className="text-lg font-bold">{bounty} ETH</span>
+        </div>
+
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Theorem:</h3>
           <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
             <code className="text-sm">{prompt}</code>
           </pre>
         </div>
 
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Bounty:</h3>
-          <p className="text-xl font-bold">{bounty} ETH</p>
-        </div>
-
         <form onSubmit={handleSubmit} className="mb-6">
           <div className="mb-4">
-            <label
-              htmlFor="proofCode"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Proof Code:
-            </label>
             <textarea
               id="proofCode"
               value={proofCode}
@@ -111,13 +107,21 @@ const TheoremDetail = () => {
             className="w-full bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 focus:outline-none focus:bg-orange-600 disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? 'Verifying...' : 'Submit Proof'}
+            {isLoading ? "Verifying..." : "Submit Proof"}
           </button>
         </form>
 
         {proofResult && (
-          <div className={`p-4 mb-4 rounded-md ${proofResult.valid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            <p className="font-bold">{proofResult.valid ? 'Proof Valid!' : 'Proof Invalid'}</p>
+          <div
+            className={`p-4 mb-4 rounded-md ${
+              proofResult.valid
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            <p className="font-bold">
+              {proofResult.valid ? "Proof Valid!" : "Proof Invalid"}
+            </p>
             {proofResult.valid && proofResult.proof && (
               <div className="mt-2">
                 <p className="font-semibold">ZK Proof:</p>

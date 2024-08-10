@@ -17,10 +17,6 @@ alloy-primitives = { version = "0.6", default-features = false, features = [
 ] }
 alloy-sol-types = { version = "0.6" }
 risc0-zkvm = { version = "1.0", default-features = false, features = ['std'] }
-lean-sys = { version = "0.0.7", default-features = false, features = [
-    "extern",
-    "small_allocator",
-] }
 
 [profile.release]
 lto = "thin"

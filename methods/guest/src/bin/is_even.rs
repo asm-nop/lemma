@@ -18,6 +18,9 @@ use alloy_primitives::U256;
 use alloy_sol_types::SolValue;
 use risc0_zkvm::guest::env;
 
+use parser::command::{parse, Command};
+use proost::evaluator::Evaluator;
+
 fn main() {
     // Read the input data for this application.
     let mut input_bytes = Vec::<u8>::new();
@@ -28,6 +31,9 @@ fn main() {
     // Run the computation.
     // In this case, asserting that the provided number is even.
     assert!(!number.bit(0), "number is not even");
+    let mdln = include_str!("../../../../mdln/examples/eq.mdln");
+    //let command = parse::file(mdln);
+    //let evaluator = Evaluator::new();
 
     // Commit the journal that will be received by the application contract.
     // Journal is encoded using Solidity ABI for easy decoding in the app contract.

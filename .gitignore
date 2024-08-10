@@ -18,3 +18,5 @@ target/
 # Misc
 .DS_Store
 .idea
+
+methods/guest/my-project

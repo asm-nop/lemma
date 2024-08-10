@@ -54,8 +54,6 @@ contract Lemma {
         address creator;
     }
 
-    Challenge constant public EMPTY_CHALLENGE = Challenge(0, "", 0, 0, address(0));
-
     error ChallengeNotExpired();
     error MinimumBounty();
     error MinBountyNotSatisfied();
@@ -114,7 +112,7 @@ contract Lemma {
         }
 
         Challenge storage challenge = challenges[challengeId];
-        if (challenge == EMPTY_CHALLENGE) {
+        if (challenge.creator == address(0)) {
             revert ChallengeDoesNotExist();
         }
 

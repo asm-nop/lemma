@@ -83,7 +83,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         vm.deal(address(this), type(uint128).max);
         string memory challengeName = "And Commutativity";
         string
-            memory theorem = "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C def and_comm (A B: Prop): (And A B) -> (And B A) := ";
+            memory theorem = "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=";
 
         uint256 expirationTimestamp = vm.getBlockTimestamp() + 1 days;
         uint256 bounty = 1 ether;
@@ -107,19 +107,16 @@ contract LemmaTest is RiscZeroCheats, Test {
 
     function test_submitSolution() public {
         submitAndCommuntativityChallenge();
-
         ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
             sender: address(this),
-            theorem: "And Commutativity",
-            solution: "def and_comm (A B: Prop): (And A B) -> (And B A) := "
+            theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
+            solution: "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
         });
 
         (bytes memory journal, bytes memory seal) = prove(
             Elf.LEMMA_PATH,
             abi.encode(inputs)
         );
-
-        // TODO: get proof
     }
 
     // TODO: if time, test fail to submit solution

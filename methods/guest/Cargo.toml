@@ -17,6 +17,7 @@ alloy-primitives = { version = "0.6", default-features = false, features = [
 ] }
 alloy-sol-types = { version = "0.6" }
 risc0-zkvm = { version = "1.0", default-features = false, features = ['std'] }
+proost = { git = "https://gitlab.crans.org/loutr/proost.git" }
 
 [profile.release]
 lto = "thin"

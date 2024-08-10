@@ -64,17 +64,26 @@ mod tests {
         // assert_eq!(x, even_number);
     }
 
-    // #[test]
-    // #[should_panic(expected = "number is not even")]
-    // fn rejects_invalid_theorem() {
-    //     let odd_number = U256::from(75);
-    //
-    //     let env = ExecutorEnv::builder()
-    //         .write_slice(&odd_number.abi_encode())
-    //         .build()
-    //         .unwrap();
-    //
-    //     // NOTE: Use the executor to run tests without proving.
-    //     default_executor().execute(env, super::LEMMA_ELF).unwrap();
-    // }
+    #[test]
+    #[should_panic(expected = "invalid proof")]
+    fn rejects_invalid_theorem() {
+        let inputs = Inputs {
+            sender: "0x1234".to_string(),
+            theorem_template: r#"
+                def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
+
+                def and_comm (A B: Prop): (And A B) -> (And B A) := "#
+                .to_string(),
+            solution: "".to_string(),
+        };
+
+        let env = ExecutorEnv::builder()
+            .write(&inputs)
+            .unwrap()
+            .build()
+            .unwrap();
+
+        // NOTE: Use the executor to run tests without proving.
+        let session_info = default_executor().execute(env, super::LEMMA_ELF).unwrap();
+    }
 }

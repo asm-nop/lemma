@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use alloy_primitives::FixedBytes;
 use alloy_sol_types::SolValue;
 use core::{Inputs, Outputs};
 use mini_proost::process_input;
@@ -35,8 +36,9 @@ fn main() {
 
     // Commit the journal that will be received by the application contract.
     // Journal is encoded using Solidity ABI for easy decoding in the app contract.
+    // assert!(sha.len() == 32);
     let outputs = Outputs {
-        solution_hash: sha.as_bytes().try_into().unwrap(),
+        solution_hash: FixedBytes::from(sha.as_ref()),
         sender: inputs.sender,
     };
     env::commit_slice(outputs.abi_encode().as_slice());

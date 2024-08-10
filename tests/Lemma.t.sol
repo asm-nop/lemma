@@ -105,18 +105,23 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(address(lemma).balance, bounty);
     }
 
-    function test_submitSolution() public {
-        submitAndCommuntativityChallenge();
+    function test_proveTheorem() public {
         ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
             sender: address(this),
             theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
             solution: "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
         });
 
+        vm.setEnv("RISC0_DEV_MODE", "true");
+
         (bytes memory journal, bytes memory seal) = prove(
             Elf.LEMMA_PATH,
             abi.encode(inputs)
         );
+    }
+
+    function test_submitSolution() public {
+        submitAndCommuntativityChallenge();
     }
 
     // TODO: if time, test fail to submit solution

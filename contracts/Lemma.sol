@@ -26,11 +26,14 @@ contract Lemma {
     /// @notice RISC Zero verifier contract address.
     IRiscZeroVerifier public immutable verifier;
 
+    // TODO: This should map the the auto-generated contract id or something
+    bytes32 public constant imageId = 0;
+
     constructor(IRiscZeroVerifier _verifier) {
         verifier = _verifier;
     }
 
-    uint256 challengeNonce = 0;
+    uint256 public challengeNonce = 0;
     uint256 minimumBounty;
     uint256 minimumChallengeDuration;
 
@@ -40,14 +43,14 @@ contract Lemma {
         address sender
     );
 
-    event ChallengeExpired(uint256 challengeId);
+    event ChallengeDeleted(uint256 challengeId);
 
     //TODO: pack this struct
     struct Challenge {
         uint256 challengeId;
         string prompt;
         uint256 bounty;
-        uint128 expirationTimestamp;
+        uint256 expirationTimestamp;
         address creator;
     }
 
@@ -56,19 +59,24 @@ contract Lemma {
     error MinBountyNotSatisfied();
     error MinimumChallengeDuration();
     error MsgSenderIsNotChallengeCreator();
+    error ChallengeDoesNotExist();
 
     /// @notice Challenge nonce to challenge
     mapping(uint256 => Challenge) public challenges;
 
-    /// @notice The current first active challenge nonce/id
-    uint256 public firstActiveChallengeId = 0;
-    uint256 public numActiveChallenges = 0;
+    /// @notice Solution hash to solution
+    // mapping(uint256 => Solution) public solutions;
 
+    function getChallenge(uint256 challengeId) public view returns (Challenge memory) {
+        return challenges[challengeId];
+    }
+
+    /// @notice Creates a new challenge, returns its id
     function createChallenge(
         string calldata prompt,
-        uint128 expirationTimestamp,
+        uint256 expirationTimestamp,
         uint256 bounty
-    ) public payable {
+    ) public payable returns (uint256) {
         if (expirationTimestamp < block.timestamp + minimumChallengeDuration) {
             revert MinimumChallengeDuration();
         }
@@ -94,13 +102,26 @@ contract Lemma {
             expirationTimestamp,
             msg.sender
         );
+
+        return challengeId;
+    }
+
+    function submitSolution(uint256 challengeId, uint256 solutionHash, bytes calldata seal) public {
+        if (challengeId < challengeNonce) {
+            revert ChallengeDoesNotExist();
+        }
+
+        Challenge storage challenge = challenges[challengeId];
+
+        bytes memory journal = abi.encode(solutionHash, msg.sender);
+        verifier.verify(seal, imageId, sha256(journal));
     }
 
     // TODO: add non reentrant
-    function reclaimBounty(uint256 challengeId) public {
-        Challenge memory challenge = challenges[challengeId];
-
-        // TODO: check if challenge exists
+    /// @notice Terminates a challenge
+    /// Reclaims the bounty for the challenge creator
+    function terminateChallenge(uint256 challengeId) internal {
+        Challenge storage challenge = challenges[challengeId];
 
         if (challenge.creator != msg.sender) {
             revert MsgSenderIsNotChallengeCreator();
@@ -110,15 +131,15 @@ contract Lemma {
             revert ChallengeNotExpired();
         }
 
-        // TODO: remove challenge before sending ether to avoid reentrancy
-
-        emit ChallengeExpired(challengeId);
-
-        // TODO: safeTransfer(msg.sender, challenge.bounty);
-    }
-
-    function removeChallenge(uint256 challengeId) internal {
+        uint256 bounty = challenge.bounty;
         delete challenges[challengeId];
+
+        emit ChallengeDeleted(challengeId);
+
+        // Pay out bounty
+        (bool sent, bytes memory data) = msg.sender.call{value: bounty}("");
+
+        require(sent, "Failed to send Ether");
     }
 
     //TODO: some function to get your eth back if you created a challenge and no one solved it in time

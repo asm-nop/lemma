@@ -19,5 +19,14 @@ contract LemmaTest is RiscZeroCheats, Test {
     }
 
     function test_AddChallenge() public {
+        uint256 ts = vm.getBlockTimestamp() + 1 days;
+        uint256 challengeId = lemma.createChallenge("My challenge", ts, 1 ether);
+
+        Lemma.Challenge memory challenge = lemma.getChallenge(challengeId);
+
+        assertEq(challenge.challengeId, challengeId);
+        assertEq(challenge.prompt, "My challenge");
+        assertEq(challenge.bounty, 1 ether);
+        assertEq(challenge.expirationTimestamp, ts);
     }
 }

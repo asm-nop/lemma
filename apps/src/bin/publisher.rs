@@ -21,6 +21,7 @@ use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
 use clap::Parser;
 use ethers::prelude::*;
+use lemma_core::{Inputs, Outputs};
 use methods::LEMMA_ELF;
 use risc0_ethereum_contracts::groth16;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
@@ -95,7 +96,7 @@ struct Args {
 
     /// The input to provide to the guest binary
     #[clap(short, long)]
-    input: U256,
+    input: String,
 }
 
 fn main() -> Result<()> {
@@ -135,7 +136,7 @@ fn main() -> Result<()> {
     // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
     // the verified number. This ensures that the number being submitted to the blockchain matches
     // the number that was verified off-chain.
-    let x = U256::abi_decode(&journal, true).context("decoding journal data")?;
+    let x = String::abi_decode(&journal, true).context("decoding journal data")?;
 
     // Construct function call: Using the IEvenNumber interface, the application constructs
     // the ABI-encoded function call for the set function of the EvenNumber contract.

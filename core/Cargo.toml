@@ -6,3 +6,5 @@ edition = { workspace = true }
 [dependencies]
 serde = {version = "1", features = ["derive"]} 
 risc0-zkvm = { workspace = true, features = ["client"] }
+alloy-primitives = { workspace = true }
+alloy-sol-types = { workspace = true }

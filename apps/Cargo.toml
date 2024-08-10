@@ -9,6 +9,7 @@ alloy-sol-types = { workspace = true }
 anyhow = { workspace = true }
 lemma-core = { path = "../core", package = "core" }
 clap = { version = "4.0", features = ["derive", "env"] }
+serde_json = { version = "1.0" }
 env_logger = { version = "0.10" }
 ethers = { workspace = true }
 log = { workspace = true }

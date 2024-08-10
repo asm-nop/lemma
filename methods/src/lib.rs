@@ -28,7 +28,7 @@ mod tests {
     fn proves_valid_theorem() {
         let inputs = Inputs {
             sender: "0x1234".to_string(),
-            theorem_template: r#"
+            theorem: r#"
                 def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
 
                 def and_comm (A B: Prop): (And A B) -> (And B A) := "#.to_string(),
@@ -53,7 +53,7 @@ mod tests {
     fn rejects_invalid_theorem() {
         let inputs = Inputs {
             sender: "0x1234".to_string(),
-            theorem_template: r#"
+            theorem: r#"
                 def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
 
                 def and_comm (A B: Prop): (And A B) -> (And B A) := "#

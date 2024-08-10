@@ -103,7 +103,6 @@ contract Lemma {
     }
 
     /// @notice Creates a new challenge, returns its id
-
     /// @dev note that theorem is theorem template
     function createChallenge(
         string calldata challengeName,
@@ -192,7 +191,7 @@ contract Lemma {
             revert InvalidSender();
         }
 
-        // TODO: pay bounty
+        (bool sent, bytes memory data) = msg.sender.call{value: bounty}("");
 
         // Delete the challenge
         delete challenges[challengeId];

@@ -17,8 +17,9 @@ alloy-primitives = { version = "0.6", default-features = false, features = [
 ] }
 alloy-sol-types = { version = "0.6" }
 risc0-zkvm = { version = "1.0", default-features = false, features = ['std'] }
-proost = { git = "https://github.com/asm-nop/proost.git" }
-parser = { git = "https://github.com/asm-nop/proost.git" }
+serde = { version = "1", features = ["derive"] }
+# proost = { git = "https://github.com/asm-nop/proost.git" }
+# parser = { git = "https://github.com/asm-nop/proost.git" }
 
 [profile.release]
 lto = "thin"

@@ -41,11 +41,12 @@ fn main() {
     let statement = inputs.theorem_template + &inputs.solution;
 
     let sha = *Impl::hash_bytes(statement.as_bytes());
+    let statement = r#"def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C"#;
 
     // Run the computation.
     // In this case, asserting that the provided number is even.
-    // let mdln = include_str!("../../../../mdln/examples/eq.mdln");
-    let _ = process_input(&statement).expect("invalid proof");
+    let mdln = include_str!("../../../../mdln/examples/irrelevance.mdln");
+    let _ = process_input(&mdln).expect("invalid proof");
 
     // Commit the journal that will be received by the application contract.
     // Journal is encoded using Solidity ABI for easy decoding in the app contract.

@@ -17,6 +17,7 @@
 pragma solidity ^0.8.20;
 
 import {IRiscZeroVerifier} from "risc0/IRiscZeroVerifier.sol";
+import {ImageID} from "./ImageID.sol"; // auto-generated contract after running `cargo build`.
 
 /// @title A starter application using RISC Zero.
 /// @notice This basic application holds a number, guaranteed to be even.
@@ -25,18 +26,16 @@ import {IRiscZeroVerifier} from "risc0/IRiscZeroVerifier.sol";
 contract Lemma {
     /// @notice RISC Zero verifier contract address.
     IRiscZeroVerifier public immutable verifier;
-
-    // TODO: This should map the the auto-generated contract id or something
-    bytes32 public constant imageId = 0;
+    bytes32 public constant imageId = ImageID.LEMMA_ID;
 
     constructor(IRiscZeroVerifier _verifier) {
         verifier = _verifier;
     }
 
     uint256 public challengeNonce = 0;
-    uint256 minimumBounty;
-    uint256 minimumChallengeDuration;
-    uint256 solutionExpirationTime;
+    uint256 public immutable minimumBounty;
+    uint256 public immutable minimumChallengeDuration;
+    uint256 public immutable solutionExpirationTime;
 
     event ChallengeCreated(
         uint256 challengeId,

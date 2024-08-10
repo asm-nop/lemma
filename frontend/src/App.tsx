@@ -1,7 +1,7 @@
 import Header from "./components/Header.tsx";
 import TheoremList from "./components/TheoremList.tsx";
 import Footer from "./components/Footer.tsx";
-import './index.css'
+import "./index.css";
 
 function App() {
   return (

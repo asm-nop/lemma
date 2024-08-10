@@ -96,7 +96,7 @@ struct Args {
 
     /// The input to provide to the guest binary
     #[clap(short, long)]
-    input: String,
+    input: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -114,7 +114,6 @@ fn main() -> Result<()> {
 
     // ABI encode input: Before sending the proof request to the Bonsai proving service,
     // the input number is ABI-encoded to match the format expected by the guest code running in the zkVM.
-    let input = args.input.abi_encode();
     let test_input = Inputs {
         sender: Address::default(),
         theorem: r#"
@@ -127,9 +126,13 @@ fn main() -> Result<()> {
                 .to_string(),
     };
 
-    // let env = ExecutorEnv::builder().write_slice(&input).build()?;
+    let input = match args.input {
+        Some(input) => serde_json::from_str::<Inputs>(&input)?,
+        None => test_input,
+    };
+
     let env = ExecutorEnv::builder()
-        .write_slice(&test_input.abi_encode())
+        .write_slice(&input.abi_encode())
         .build()?;
 
     let receipt = default_prover()
@@ -163,11 +166,11 @@ fn main() -> Result<()> {
     .abi_encode();
 
     // Initialize the async runtime environment to handle the transaction sending.
-    // let runtime = tokio::runtime::Runtime::new()?;
+    let runtime = tokio::runtime::Runtime::new()?;
 
     // Send transaction: Finally, the TxSender component sends the transaction to the Ethereum blockchain,
     // effectively calling the set function of the EvenNumber contract with the verified number and proof.
-    // runtime.block_on(tx_sender.send(calldata))?;
+    runtime.block_on(tx_sender.send(calldata))?;
 
     Ok(())
 }

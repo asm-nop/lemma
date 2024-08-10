@@ -16,7 +16,7 @@ const TheoremList: React.FC = () => {
         >
           <h2 className="text-xl font-semibold">{theorem.title}</h2>
           <p className="text-gray-600">Reward: {theorem.reward}</p>
-          <button className="mt-2 bg-orange-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+          <button className="mt-2 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors">
             View Details
           </button>
         </div>

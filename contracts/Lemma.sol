@@ -84,6 +84,10 @@ contract Lemma {
         return challenges[challengeId];
     }
 
+    function getChallengeNonce() public view returns (uint256) {
+        return challengeNonce;
+    }
+
     /// @notice Creates a new challenge, returns its id
     function createChallenge(
         string calldata prompt,

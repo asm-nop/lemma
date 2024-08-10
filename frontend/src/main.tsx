@@ -8,7 +8,7 @@ import { TheoremProvider } from "./providers/TheoremProvider.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <MetaMaskProvider
-      debug={false}
+      debug={true}
       sdkOptions={{
         dappMetadata: {
           name: "lemma",

@@ -12,8 +12,7 @@ function App() {
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
-            <Route path="/" element={<>empty</>} />
-            <Route path="/theorems" element={<TheoremList />} />
+            <Route path="/" element={<TheoremList />} />
             <Route path="/theorem/:slug" element={<TheoremDetail />} />
           </Routes>
         </main>

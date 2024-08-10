@@ -48,12 +48,19 @@ contract LemmaDeploy is Script {
 
         // Read the config profile from the environment variable, or use the default for the chainId.
         // Default is the first profile with a matching chainId field.
-        string memory config = vm.readFile(string.concat(vm.projectRoot(), "/", CONFIG_FILE));
+        string memory config = vm.readFile(
+            string.concat(vm.projectRoot(), "/", CONFIG_FILE)
+        );
         string memory configProfile = vm.envOr("CONFIG_PROFILE", string(""));
         if (bytes(configProfile).length == 0) {
             string[] memory profileKeys = vm.parseTomlKeys(config, ".profile");
             for (uint256 i = 0; i < profileKeys.length; i++) {
-                if (stdToml.readUint(config, string.concat(".profile.", profileKeys[i], ".chainId")) == chainId) {
+                if (
+                    stdToml.readUint(
+                        config,
+                        string.concat(".profile.", profileKeys[i], ".chainId")
+                    ) == chainId
+                ) {
                     configProfile = profileKeys[i];
                     break;
                 }
@@ -62,15 +69,22 @@ contract LemmaDeploy is Script {
 
         if (bytes(configProfile).length != 0) {
             console2.log("Deploying using config profile:", configProfile);
-            string memory configProfileKey = string.concat(".profile.", configProfile);
-            address riscZeroVerifierAddress =
-                stdToml.readAddress(config, string.concat(configProfileKey, ".riscZeroVerifierAddress"));
+            string memory configProfileKey = string.concat(
+                ".profile.",
+                configProfile
+            );
+            address riscZeroVerifierAddress = stdToml.readAddress(
+                config,
+                string.concat(configProfileKey, ".riscZeroVerifierAddress")
+            );
             // If set, use the predeployed verifier address found in the config.
             verifier = IRiscZeroVerifier(riscZeroVerifierAddress);
         }
 
         // Determine the wallet to send transactions from.
-        uint256 deployerKey = uint256(vm.envOr("ETH_WALLET_PRIVATE_KEY", bytes32(0)));
+        uint256 deployerKey = uint256(
+            vm.envOr("ETH_WALLET_PRIVATE_KEY", bytes32(0))
+        );
         address deployerAddr = address(0);
         if (deployerKey != 0) {
             // Check for conflicts in how the two environment variables are set.
@@ -88,14 +102,32 @@ contract LemmaDeploy is Script {
 
         // Deploy the verifier, if not already deployed.
         if (address(verifier) == address(0)) {
-            verifier = new RiscZeroGroth16Verifier(ControlID.CONTROL_ROOT, ControlID.BN254_CONTROL_ID);
-            console2.log("Deployed RiscZeroGroth16Verifier to", address(verifier));
+            verifier = new RiscZeroGroth16Verifier(
+                ControlID.CONTROL_ROOT,
+                ControlID.BN254_CONTROL_ID
+            );
+            console2.log(
+                "Deployed RiscZeroGroth16Verifier to",
+                address(verifier)
+            );
         } else {
-            console2.log("Using IRiscZeroVerifier contract deployed at", address(verifier));
+            console2.log(
+                "Using IRiscZeroVerifier contract deployed at",
+                address(verifier)
+            );
         }
 
         // Deploy the application contract.
-        Lemma lemma = new Lemma(verifier);
+        uint256 minimumBounty = 1000 wei;
+        uint256 minimumChallengeDuration = 1 days;
+        uint256 solutionExpirationTime = 10 minutes;
+
+        Lemma lemma = new Lemma(
+            verifier,
+            minimumBounty,
+            minimumChallengeDuration,
+            solutionExpirationTime
+        );
         console2.log("Deployed Lemma to", address(lemma));
 
         vm.stopBroadcast();

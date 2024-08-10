@@ -28,8 +28,16 @@ contract Lemma {
     IRiscZeroVerifier public immutable verifier;
     bytes32 public constant imageId = ImageID.LEMMA_ID;
 
-    constructor(IRiscZeroVerifier _verifier) {
+    constructor(
+        IRiscZeroVerifier _verifier,
+        uint256 _minimumBounty,
+        uint256 _minimumChallengeDuration,
+        uint256 _solutionExpirationTime
+    ) {
         verifier = _verifier;
+        minimumBounty = _minimumBounty;
+        minimumChallengeDuration = _minimumChallengeDuration;
+        solutionExpirationTime = _solutionExpirationTime;
     }
 
     uint256 public challengeNonce = 0;
@@ -49,7 +57,7 @@ contract Lemma {
     struct Challenge {
         address creator;
         uint256 challengeId;
-        string prompt;
+        string theorem;
         uint256 bounty;
         uint256 expirationTimestamp;
     }
@@ -88,8 +96,10 @@ contract Lemma {
     }
 
     /// @notice Creates a new challenge, returns its id
+
+    /// @dev note that theorem is theorem template
     function createChallenge(
-        string calldata prompt,
+        string calldata theorem,
         uint256 expirationTimestamp,
         uint256 bounty
     ) public payable returns (uint256) {
@@ -106,7 +116,7 @@ contract Lemma {
         challenges[challengeId] = Challenge(
             msg.sender,
             challengeId,
-            prompt,
+            theorem,
             bounty,
             expirationTimestamp
         );

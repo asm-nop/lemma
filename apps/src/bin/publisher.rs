@@ -21,14 +21,15 @@ use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
 use clap::Parser;
 use ethers::prelude::*;
+// use lemma_core::{Inputs, Outputs};
 use methods::LEMMA_ELF;
 use risc0_ethereum_contracts::groth16;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 
-// `IEvenNumber` interface automatically generated via the alloy `sol!` macro.
+// `ILemma` interface automatically generated via the alloy `sol!` macro.
 sol! {
-    interface IEvenNumber {
-        function set(uint256 x, bytes calldata seal);
+    interface ILemma {
+        function submitSolution(uint256 challengeId, bytes32 solutionHash, bytes calldata seal);
     }
 }
 
@@ -95,7 +96,7 @@ struct Args {
 
     /// The input to provide to the guest binary
     #[clap(short, long)]
-    input: U256,
+    input: String,
 }
 
 fn main() -> Result<()> {
@@ -135,13 +136,14 @@ fn main() -> Result<()> {
     // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
     // the verified number. This ensures that the number being submitted to the blockchain matches
     // the number that was verified off-chain.
-    let x = U256::abi_decode(&journal, true).context("decoding journal data")?;
+    let _ = String::abi_decode(&journal, true).context("decoding journal data")?;
 
     // Construct function call: Using the IEvenNumber interface, the application constructs
     // the ABI-encoded function call for the set function of the EvenNumber contract.
     // This call includes the verified number, the post-state digest, and the seal (proof).
-    let calldata = IEvenNumber::IEvenNumberCalls::set(IEvenNumber::setCall {
-        x,
+    let calldata = ILemma::ILemmaCalls::submitSolution(ILemma::submitSolutionCall {
+        challengeId: U256::from(0),
+        solutionHash: [0u8; 32].into(),
         seal: seal.into(),
     })
     .abi_encode();

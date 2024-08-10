@@ -265,6 +265,7 @@ dependencies = [
  "alloy-sol-types 0.6.4",
  "anyhow",
  "clap",
+ "core",
  "env_logger",
  "ethers",
  "log",

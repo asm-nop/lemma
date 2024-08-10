@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity ^0.8.20;
@@ -8,7 +7,6 @@ import {console2} from "forge-std/console2.sol";
 import {Test} from "forge-std/Test.sol";
 import {Lemma} from "../contracts/Lemma.sol";
 import {IRiscZeroVerifier} from "risc0/IRiscZeroVerifier.sol";
-
 
 contract LemmaTest is RiscZeroCheats, Test {
     Lemma public lemma;

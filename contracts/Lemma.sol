@@ -44,19 +44,15 @@ contract Lemma {
         address sender
     );
     event ChallengeDeleted(uint256 challengeId);
-
-    event ChallengeSolved(
-        uint256 challengeId,
-        address sender
-    );
+    event ChallengeSolved(uint256 challengeId, address sender);
 
     //TODO: pack this struct
     struct Challenge {
+        address creator;
         uint256 challengeId;
         string prompt;
         uint256 bounty;
         uint256 expirationTimestamp;
-        address creator;
     }
 
     error ChallengeNotExpired();
@@ -65,21 +61,22 @@ contract Lemma {
     error MsgSenderIsNotChallengeCreator();
     error ChallengeDoesNotExist();
     error SolutionAlreadyExists(uint256 expirationeTimestamp);
+    error SolutionDoesNotExist();
     error InvalidSolution();
     error InvalidSender();
 
     /// @notice Challenge nonce to challenge
     mapping(uint256 => Challenge) public challenges;
 
+    //TODO: pack structs
     struct Solution {
         bytes32 solutionHash;
-        address expirationTimestamp;
+        uint256 expirationTimestamp;
         address sender;
     }
 
     /// @notice Challenge Id to solution
     mapping(uint256 => Solution) public solutions;
-
 
     function getChallenge(
         uint256 challengeId
@@ -104,11 +101,11 @@ contract Lemma {
         uint256 challengeId = challengeNonce;
 
         challenges[challengeId] = Challenge(
+            msg.sender,
             challengeId,
             prompt,
             bounty,
-            expirationTimestamp,
-            msg.sender
+            expirationTimestamp
         );
 
         challengeNonce = challengeId + 1;
@@ -120,7 +117,7 @@ contract Lemma {
 
     function submitSolution(
         uint256 challengeId,
-        uint256 solutionHash,
+        bytes32 solutionHash,
         bytes calldata seal
     ) public {
         /// @notice Check if the challenge exists
@@ -142,27 +139,35 @@ contract Lemma {
 
         solutions[challengeId] = Solution(
             solutionHash,
-            block.timestamp + solutionExpirationTime
-            msg.sender,
+            block.timestamp + solutionExpirationTime,
+            msg.sender
         );
     }
 
-    function claimBounty(
-        uint256 challengeId,
-        string calldata solution,
-    ) public {
-        Solution memory solution = solutions[challengeId];
+    function claimBounty(uint256 challengeId, string calldata solution) public {
+        /// @notice Check if the challenge exists
+        /// @dev It is possible that the challenge expiration timestamp elapsed before the bounty was claimed
+        Challenge storage challenge = challenges[challengeId];
+        if (challenge.expirationTimestamp == 0) {
+            revert ChallengeDoesNotExist();
+        }
 
-        if (solution.expirationTimestamp == 0 ) {
+        if (challenge.expirationTimestamp < block.timestamp) {
+            revert ChallengeNotExpired();
+        }
+
+        Solution memory existingSolution = solutions[challengeId];
+
+        if (existingSolution.expirationTimestamp == 0) {
             revert SolutionDoesNotExist();
         }
 
         bytes32 solutionHash = keccak256(abi.encode(solution));
-        if (solution.solutionHash != solutionHash) {
+        if (existingSolution.solutionHash != solutionHash) {
             revert InvalidSolution();
         }
 
-        if (solution.sender != msg.sender) {
+        if (existingSolution.sender != msg.sender) {
             revert InvalidSender();
         }
 
@@ -193,12 +198,10 @@ contract Lemma {
 
         uint256 bounty = challenge.bounty;
         delete challenges[challengeId];
-
         emit ChallengeDeleted(challengeId);
 
-        // Pay out bounty
+        // TODO: use safe transfer
         (bool sent, bytes memory data) = msg.sender.call{value: bounty}("");
         require(sent, "Failed to send Ether");
     }
-
 }

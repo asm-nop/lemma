@@ -129,8 +129,7 @@ fn main() -> Result<()> {
 
     // let env = ExecutorEnv::builder().write_slice(&input).build()?;
     let env = ExecutorEnv::builder()
-        .write(&test_input.abi_encode())
-        .unwrap()
+        .write_slice(&test_input.abi_encode())
         .build()?;
 
     let receipt = default_prover()

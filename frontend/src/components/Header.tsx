@@ -34,6 +34,9 @@ const Header: React.FC = () => {
         </h1>
         <nav>
           <ul className="flex space-x-4">
+            <li>
+                <Link to="/submit">Submit Theorem</Link>
+            </li>
             {connected ? (
               <li>
                 <a

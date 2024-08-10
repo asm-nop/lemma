@@ -128,7 +128,10 @@ fn main() -> Result<()> {
     };
 
     // let env = ExecutorEnv::builder().write_slice(&input).build()?;
-    let env = ExecutorEnv::builder().write(&test_input).unwrap().build()?;
+    let env = ExecutorEnv::builder()
+        .write(&test_input.abi_encode())
+        .unwrap()
+        .build()?;
 
     let receipt = default_prover()
         .prove_with_ctx(
@@ -139,16 +142,16 @@ fn main() -> Result<()> {
         )?
         .receipt;
 
-    // Encode the seal with the selector.
-    let seal = groth16::encode(receipt.inner.groth16()?.seal.clone())?;
-
-    // Extract the journal from the receipt.
-    let journal = receipt.journal.bytes.clone();
-
-    // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
-    // the verified number. This ensures that the number being submitted to the blockchain matches
-    // the number that was verified off-chain.
-    let _ = Outputs::abi_decode(&journal, true).context("decoding journal data")?;
+    // // Encode the seal with the selector.
+    // let seal = groth16::encode(receipt.inner.groth16()?.seal.clone())?;
+    //
+    // // Extract the journal from the receipt.
+    // let journal = receipt.journal.bytes.clone();
+    //
+    // // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
+    // // the verified number. This ensures that the number being submitted to the blockchain matches
+    // // the number that was verified off-chain.
+    // let _ = Outputs::abi_decode(&journal, true).context("decoding journal data")?;
 
     // // Construct function call: Using the IEvenNumber interface, the application constructs
     // // the ABI-encoded function call for the set function of the EvenNumber contract.

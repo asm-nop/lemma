@@ -21,7 +21,7 @@ use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
 use clap::Parser;
 use ethers::prelude::*;
-use methods::IS_EVEN_ELF;
+use methods::LEMMA_ELF;
 use risc0_ethereum_contracts::groth16;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 
@@ -121,7 +121,7 @@ fn main() -> Result<()> {
         .prove_with_ctx(
             env,
             &VerifierContext::default(),
-            IS_EVEN_ELF,
+            LEMMA_ELF,
             &ProverOpts::groth16(),
         )?
         .receipt;

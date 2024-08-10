@@ -22,20 +22,17 @@ use risc0_zkvm::{
     sha::{Impl, Sha256},
 };
 
-// use parser::command::{parse, Command};
-// use proost::evaluator::Evaluator;
-
 #[derive(Serialize, Deserialize)]
 pub struct Inputs {
+    sender: String,
     theorem_template: String,
     solution: String,
-    sender: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Outputs {
-    solution_hash: Digest,
     sender: String,
+    solution_hash: Digest,
 }
 
 fn main() {
@@ -47,10 +44,8 @@ fn main() {
 
     // Run the computation.
     // In this case, asserting that the provided number is even.
-    let _ = process_input(&statement).expect("Bad");
     // let mdln = include_str!("../../../../mdln/examples/eq.mdln");
-    //let command = parse::file(mdln);
-    //let evaluator = Evaluator::new();
+    let _ = process_input(&statement).expect("invalid proof");
 
     // Commit the journal that will be received by the application contract.
     // Journal is encoded using Solidity ABI for easy decoding in the app contract.

@@ -10,15 +10,15 @@ import { useSDK } from "@metamask/sdk-react";
 
 // Define the shape of a theorem
 interface Theorem {
-  challengeId: string;
+  challengeId: bigint;
   prompt: string;
-  bounty: string;
+  bounty: bigint;
 }
 
 // Define the shape of our context
 interface TheoremContextType {
-  theorems: Theorem[];
-  fetchTheorem: (id: string) => Promise<Theorem | null>;
+  theorems: Map<bigint, Theorem>;
+  fetchTheorem: (id: bigint) => Promise<Theorem | null>;
   account: string | null;
   connectWallet: () => Promise<void>;
 }
@@ -39,7 +39,7 @@ const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"; // Replac
 export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [theorems, setTheorems] = useState<Theorem[]>([]);
+  const [theorems, setTheorems] = useState<Map<bigint, Theorem>>(new Map());
   const [account, setAccount] = useState<string | null>(null);
   const { sdk, connected } = useSDK();
 
@@ -76,10 +76,15 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     return new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
   };
 
-  const fetchTheorem = async (id: string): Promise<Theorem | null> => {
+  const fetchTheorem = async (id: bigint): Promise<Theorem | null> => {
     try {
       const contract = await getContract();
-      return await contract.getChallenge(id);
+      const challenge = await contract.challenges(id);
+      return {
+        challengeId: id,
+        prompt: challenge[2],
+        bounty: challenge[3],
+      };
     } catch (error) {
       console.error("Error fetching theorem:", error);
       return null;
@@ -90,24 +95,22 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const contract = await getContract();
       const lastChallengeNonce = await contract.challengeNonce();
-      if (lastChallengeNonce === 0) {
+      if (lastChallengeNonce === BigInt(0)) {
         console.warn("No theorems found");
         return;
       }
 
-      let fetchedTheorems = [];
-      for (let n = 0; n < lastChallengeNonce; n++) {
+      let fetchedTheorems = new Map<bigint, Theorem>();
+      for (let n = BigInt(0); n < lastChallengeNonce; n++) {
         const challenge = await contract.challenges(n);
-
-        console.log(challenge);
-        fetchedTheorems.push({
-          challengeId: n.toString(),
+        fetchedTheorems.set(n, {
+          challengeId: n,
           prompt: challenge[2],
-          bounty: ethers.formatEther(challenge[3]),
+          bounty: challenge[3],
         });
       }
 
-      setTheorems(fetchedTheorems.filter((t): t is Theorem => t !== null));
+      setTheorems(fetchedTheorems);
     } catch (error) {
       console.error("Error fetching all theorems:", error);
     }

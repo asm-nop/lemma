@@ -18,7 +18,7 @@ include!(concat!(env!("OUT_DIR"), "/methods.rs"));
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::U256;
+    use alloy_primitives::{Address, U256};
     use alloy_sol_types::SolValue;
     use risc0_zkvm::{default_executor, ExecutorEnv};
 
@@ -27,7 +27,7 @@ mod tests {
     #[test]
     fn proves_valid_theorem() {
         let inputs = Inputs {
-            sender: "0x1234".to_string(),
+            sender: Address::default(),
             theorem: r#"
                 def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
 
@@ -36,23 +36,19 @@ mod tests {
         };
 
         let env = ExecutorEnv::builder()
-            .write(&inputs)
-            .unwrap()
+            .write_slice(&inputs.abi_encode())
             .build()
             .unwrap();
 
         // NOTE: Use the executor to run tests without proving.
         let session_info = default_executor().execute(env, super::LEMMA_ELF).unwrap();
-
-        // let x = U256::abi_decode(&session_info.journal.bytes, true).unwrap();
-        // assert_eq!(x, even_number);
     }
 
     #[test]
     #[should_panic(expected = "invalid proof")]
     fn rejects_invalid_theorem() {
         let inputs = Inputs {
-            sender: "0x1234".to_string(),
+            sender: Address::default(),
             theorem: r#"
                 def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
 
@@ -62,12 +58,10 @@ mod tests {
         };
 
         let env = ExecutorEnv::builder()
-            .write(&inputs)
-            .unwrap()
+            .write_slice(&inputs.abi_encode())
             .build()
             .unwrap();
 
-        // NOTE: Use the executor to run tests without proving.
         let session_info = default_executor().execute(env, super::LEMMA_ELF).unwrap();
     }
 }

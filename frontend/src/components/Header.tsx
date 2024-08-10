@@ -1,5 +1,6 @@
 import { useSDK } from "@metamask/sdk-react";
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Header: React.FC = () => {
   const [account, setAccount] = useState<string>();
@@ -32,14 +33,14 @@ const Header: React.FC = () => {
         <nav>
           <ul className="flex space-x-4">
             <li>
-              <a href="#" className="hover:text-blue-200">
+              <Link to="/" className="hover:text-blue-200">
                 Home
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-blue-200">
+              <Link to="/theorems" className="hover:text-blue-200">
                 Theorems
-              </a>
+              </Link>
             </li>
             <li>
               <a href="#" className="hover:text-blue-200">

@@ -32,7 +32,7 @@ const TheoremList: React.FC = () => {
           Sort by Expiration: {sortAscending ? "Earliest First" : "Latest First"}
         </button>
       </div>
-      {sortedTheorems.map(([challengeId, theorem]) => {
+      {sortedTheorems.map(([_challengeId, theorem]) => {
         const bounty = ethers.formatEther(theorem.bounty);
         const expirationDate = new Date(Number(theorem.expirationTimestamp) * 1000);
 
@@ -42,7 +42,7 @@ const TheoremList: React.FC = () => {
             key={theorem.challengeId}
             className="block bg-white hover:bg-orange-200 p-6 rounded-lg shadow transition duration-300 ease-in-out"
           >
-            <h2 className="text-2xl font-semibold mb-3">{theorem.challengeName}</h2>
+            <h2 className="text-2xl font-semibold mb-3">#{theorem.challengeId.toString()} {theorem.challengeName}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="flex items-center">
                 <User className="mr-2 h-4 w-4 text-gray-500" />

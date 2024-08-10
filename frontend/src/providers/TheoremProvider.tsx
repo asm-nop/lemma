@@ -23,8 +23,12 @@ interface TheoremContextType {
   theorems: Map<bigint, Theorem>;
   account: string | null;
   connectWallet: () => Promise<void>;
-
-  submit: () => Promise<void>;
+  submit: (
+    challengeName: string,
+    theorem: string,
+    bounty: bigint,
+    expirationTimestamp: bigint
+  ) => Promise<void>;
 }
 
 // Create the context
@@ -35,10 +39,11 @@ const ABI: string[] = [
   // Add your contract ABI here
   "function challengeNonce() public view returns (uint256)",
   "function challenges(uint256 nonce) public view returns (address,uint256,string,string,uint256,uint256)",
+  "function createChallenge(string,string,uint256) public payable returns (uint256)",
 ];
 
 // Address of your deployed contract
-const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"; // Replace with your contract address
+const CONTRACT_ADDRESS = "0xfC4e19a87C59Cf362cfE7225Dd985a367427BAC2"; // Replace with your contract address
 
 export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -71,9 +76,7 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
 
   const getContract = async () => {
     if (!window.ethereum) throw new Error("No crypto wallet found");
-    // TODO: Switch comments once using a real chain and not Anvil
-    // const provider = new ethers.BrowserProvider(window.ethereum);
-    const provider = new ethers.JsonRpcProvider("http://localhost:8545");
+    const provider = new ethers.BrowserProvider(window.ethereum);
 
     const signer = await provider.getSigner();
 
@@ -83,6 +86,7 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
   const updateTheorems = async () => {
     try {
       const contract = await getContract();
+
       const lastChallengeNonce = await contract.challengeNonce();
       if (lastChallengeNonce === BigInt(0)) {
         console.warn("No theorems found");
@@ -111,6 +115,24 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const submit = async (
+    challengeName: string,
+    theorem: string,
+    bounty: bigint,
+    expirationTimestamp: bigint
+  ) => {
+    const contract = await getContract();
+
+    await contract.createChallenge(
+      challengeName,
+      theorem,
+      expirationTimestamp,
+      {
+        value: bounty,
+      }
+    );
+  };
+
   useEffect(() => {
     if (account) {
       updateTheorems();
@@ -121,7 +143,7 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     theorems,
     account,
     connectWallet,
-    submit: async () => {}
+    submit,
   };
 
   return (

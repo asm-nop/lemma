@@ -15,6 +15,8 @@
 use risc0_zkvm::sha::Digest;
 use serde::{Deserialize, Serialize};
 
+use mini_proost::process_input;
+
 use risc0_zkvm::{
     guest::env,
     sha::{Impl, Sha256},
@@ -27,11 +29,13 @@ use risc0_zkvm::{
 pub struct Inputs {
     theorem_template: String,
     solution: String,
+    sender: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Outputs {
     solution_hash: Digest,
+    sender: String,
 }
 
 fn main() {
@@ -43,13 +47,16 @@ fn main() {
 
     // Run the computation.
     // In this case, asserting that the provided number is even.
-    assert!(true, "placehodler");
+    let _ = process_input(&statement).expect("Bad");
     // let mdln = include_str!("../../../../mdln/examples/eq.mdln");
     //let command = parse::file(mdln);
     //let evaluator = Evaluator::new();
 
     // Commit the journal that will be received by the application contract.
     // Journal is encoded using Solidity ABI for easy decoding in the app contract.
-    let outputs = Outputs { solution_hash: sha };
+    let outputs = Outputs {
+        solution_hash: sha,
+        sender: inputs.sender,
+    };
     env::commit(&outputs);
 }

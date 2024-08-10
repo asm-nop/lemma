@@ -141,32 +141,32 @@ fn main() -> Result<()> {
         )?
         .receipt;
 
-    // // Encode the seal with the selector.
-    // let seal = groth16::encode(receipt.inner.groth16()?.seal.clone())?;
-    //
-    // // Extract the journal from the receipt.
-    // let journal = receipt.journal.bytes.clone();
-    //
-    // // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
-    // // the verified number. This ensures that the number being submitted to the blockchain matches
-    // // the number that was verified off-chain.
-    // let _ = Outputs::abi_decode(&journal, true).context("decoding journal data")?;
+    // Encode the seal with the selector.
+    let seal = groth16::encode(receipt.inner.groth16()?.seal.clone())?;
 
-    // // Construct function call: Using the IEvenNumber interface, the application constructs
-    // // the ABI-encoded function call for the set function of the EvenNumber contract.
-    // // This call includes the verified number, the post-state digest, and the seal (proof).
-    // let calldata = ILemma::ILemmaCalls::submitSolution(ILemma::submitSolutionCall {
-    //     challengeId: U256::from(0),
-    //     solutionHash: [0u8; 32].into(),
-    //     seal: seal.into(),
-    // })
-    // .abi_encode();
-    //
-    // // Initialize the async runtime environment to handle the transaction sending.
+    // Extract the journal from the receipt.
+    let journal = receipt.journal.bytes.clone();
+
+    // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
+    // the verified number. This ensures that the number being submitted to the blockchain matches
+    // the number that was verified off-chain.
+    let _ = Outputs::abi_decode(&journal, true).context("decoding journal data")?;
+
+    // Construct function call: Using the IEvenNumber interface, the application constructs
+    // the ABI-encoded function call for the set function of the EvenNumber contract.
+    // This call includes the verified number, the post-state digest, and the seal (proof).
+    let calldata = ILemma::ILemmaCalls::submitSolution(ILemma::submitSolutionCall {
+        challengeId: U256::from(0),
+        solutionHash: [0u8; 32].into(),
+        seal: seal.into(),
+    })
+    .abi_encode();
+
+    // Initialize the async runtime environment to handle the transaction sending.
     // let runtime = tokio::runtime::Runtime::new()?;
-    //
-    // // Send transaction: Finally, the TxSender component sends the transaction to the Ethereum blockchain,
-    // // effectively calling the set function of the EvenNumber contract with the verified number and proof.
+
+    // Send transaction: Finally, the TxSender component sends the transaction to the Ethereum blockchain,
+    // effectively calling the set function of the EvenNumber contract with the verified number and proof.
     // runtime.block_on(tx_sender.send(calldata))?;
 
     Ok(())

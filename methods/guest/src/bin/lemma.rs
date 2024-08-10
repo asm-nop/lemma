@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use alloy_sol_types::SolValue;
 use core::{Inputs, Outputs};
 use mini_proost::process_input;
 use risc0_zkvm::guest::env;
 use risc0_zkvm::sha::{Impl, Sha256};
+use std::io::Read;
 
 fn main() {
-    let inputs: Inputs = env::read();
+    let mut input_bytes = Vec::<u8>::new();
+    env::stdin().read_to_end(&mut input_bytes).unwrap();
+    // Decode and parse the input
+    let inputs = <Inputs>::abi_decode(&input_bytes, true).unwrap();
 
     let statement = inputs.theorem + "\n" + &inputs.solution;
 
@@ -34,5 +39,5 @@ fn main() {
         solution_hash: sha.as_bytes().try_into().unwrap(),
         sender: inputs.sender,
     };
-    env::commit(&outputs);
+    env::commit_slice(outputs.abi_encode().as_slice());
 }

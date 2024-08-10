@@ -36,14 +36,19 @@ contract Lemma {
     uint256 public challengeNonce = 0;
     uint256 minimumBounty;
     uint256 minimumChallengeDuration;
+    uint256 solutionExpirationTime;
 
     event ChallengeCreated(
         uint256 challengeId,
         uint256 expirationTimestamp,
         address sender
     );
-
     event ChallengeDeleted(uint256 challengeId);
+
+    event ChallengeSolved(
+        uint256 challengeId,
+        address sender
+    );
 
     //TODO: pack this struct
     struct Challenge {
@@ -56,18 +61,29 @@ contract Lemma {
 
     error ChallengeNotExpired();
     error MinimumBounty();
-    error MinBountyNotSatisfied();
     error MinimumChallengeDuration();
     error MsgSenderIsNotChallengeCreator();
     error ChallengeDoesNotExist();
+    error SolutionAlreadyExists(uint256 expirationeTimestamp);
+    error InvalidSolution();
+    error InvalidSender();
 
     /// @notice Challenge nonce to challenge
     mapping(uint256 => Challenge) public challenges;
 
-    /// @notice Solution hash to solution
-    // mapping(uint256 => Solution) public solutions;
+    struct Solution {
+        bytes32 solutionHash;
+        address expirationTimestamp;
+        address sender;
+    }
 
-    function getChallenge(uint256 challengeId) public view returns (Challenge memory) {
+    /// @notice Challenge Id to solution
+    mapping(uint256 => Solution) public solutions;
+
+
+    function getChallenge(
+        uint256 challengeId
+    ) public view returns (Challenge memory) {
         return challenges[challengeId];
     }
 
@@ -82,7 +98,7 @@ contract Lemma {
         }
 
         if (msg.value < minimumBounty) {
-            revert MinBountyNotSatisfied();
+            revert MinimumBounty();
         }
 
         uint256 challengeId = challengeNonce;
@@ -97,27 +113,66 @@ contract Lemma {
 
         challengeNonce = challengeId + 1;
 
-        emit ChallengeCreated(
-            challengeId,
-            expirationTimestamp,
-            msg.sender
-        );
+        emit ChallengeCreated(challengeId, expirationTimestamp, msg.sender);
 
         return challengeId;
     }
 
-    function submitSolution(uint256 challengeId, uint256 solutionHash, bytes calldata seal) public {
-        if (challengeId < challengeNonce) {
+    function submitSolution(
+        uint256 challengeId,
+        uint256 solutionHash,
+        bytes calldata seal
+    ) public {
+        /// @notice Check if the challenge exists
+        Challenge memory challenge = challenges[challengeId];
+        if (challenge.expirationTimestamp == 0) {
             revert ChallengeDoesNotExist();
         }
 
-        Challenge storage challenge = challenges[challengeId];
-        if (challenge.creator == address(0)) {
-            revert ChallengeDoesNotExist();
+        /// @notice Check if an active solution exists
+        uint256 solutionExpirationTimestamp = solutions[challengeId]
+            .expirationTimestamp;
+
+        if (solutionExpirationTimestamp > block.timestamp) {
+            revert SolutionAlreadyExists(solutionExpirationTimestamp);
         }
 
         bytes memory journal = abi.encode(solutionHash, msg.sender);
         verifier.verify(seal, imageId, sha256(journal));
+
+        solutions[challengeId] = Solution(
+            solutionHash,
+            block.timestamp + solutionExpirationTime
+            msg.sender,
+        );
+    }
+
+    function claimBounty(
+        uint256 challengeId,
+        string calldata solution,
+    ) public {
+        Solution memory solution = solutions[challengeId];
+
+        if (solution.expirationTimestamp == 0 ) {
+            revert SolutionDoesNotExist();
+        }
+
+        bytes32 solutionHash = keccak256(abi.encode(solution));
+        if (solution.solutionHash != solutionHash) {
+            revert InvalidSolution();
+        }
+
+        if (solution.sender != msg.sender) {
+            revert InvalidSender();
+        }
+
+        // TODO: pay bounty
+
+        // Delete the challenge
+        delete challenges[challengeId];
+        delete solutions[challengeId];
+
+        emit ChallengeSolved(challengeId, msg.sender);
     }
 
     // TODO: add non reentrant
@@ -125,6 +180,8 @@ contract Lemma {
     /// Reclaims the bounty for the challenge creator
     function terminateChallenge(uint256 challengeId) internal {
         Challenge storage challenge = challenges[challengeId];
+
+        // TODO: check if expired and then if so you can terminate the challenge, anyone can terminate the challenge if it is expired
 
         if (challenge.creator != msg.sender) {
             revert MsgSenderIsNotChallengeCreator();
@@ -141,20 +198,7 @@ contract Lemma {
 
         // Pay out bounty
         (bool sent, bytes memory data) = msg.sender.call{value: bounty}("");
-
         require(sent, "Failed to send Ether");
     }
 
-    //TODO: some function to get your eth back if you created a challenge and no one solved it in time
-
-    // TODO: maybe have some challengeId to nonce.
-
-    // TODO: make it a two step where you have some solution, hash the solution as a public input, actual solution as a private input
-
-    // TODO: Then if the proof is validated, it will record the hash with your address as the sender, maybe need a solutions mapping
-    // TODO: then you can submit the solution, and it will check if the hash is in the solutions mapping, and if it is, it will record the solution as the solution for that hash
-
-    // TODO: and you have n time to claim until it expires and then someone else can claim it.
-
-    // TODO: some function to submit a challenge
 }

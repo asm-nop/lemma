@@ -21,7 +21,7 @@ use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
 use clap::Parser;
 use ethers::prelude::*;
-// use lemma_core::{Inputs, Outputs};
+use lemma_core::{Inputs, Outputs};
 use methods::LEMMA_ELF;
 use risc0_ethereum_contracts::groth16;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
@@ -115,8 +115,14 @@ fn main() -> Result<()> {
     // ABI encode input: Before sending the proof request to the Bonsai proving service,
     // the input number is ABI-encoded to match the format expected by the guest code running in the zkVM.
     let input = args.input.abi_encode();
+    let test_input = Inputs {
+        sender: "test".to_string(),
+        theorem_template: "test".to_string(),
+        solution: "test".to_string(),
+    };
 
-    let env = ExecutorEnv::builder().write_slice(&input).build()?;
+    // let env = ExecutorEnv::builder().write_slice(&input).build()?;
+    let env = ExecutorEnv::builder().write(&test_input).unwrap().build()?;
 
     let receipt = default_prover()
         .prove_with_ctx(

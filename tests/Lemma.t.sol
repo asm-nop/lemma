@@ -239,7 +239,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         uint256 balanceBefore = address(this).balance;
 
         vm.expectEmit(true, true, true, true);
-        emit Lemma.ChallengeSolved(0);
+        emit Lemma.ChallengeSolved(0, address(this));
         lemma.claimBounty(0, solution);
 
         uint256 balanceAfter = address(this).balance;
@@ -287,10 +287,10 @@ contract LemmaTest is RiscZeroCheats, Test {
 
         vm.warp(expirationTimestamp + 1);
 
-        lemma.terminateChallenge(0);
-
         vm.expectEmit(true, true, true, true);
         emit Lemma.ChallengeDeleted(0);
+        lemma.terminateChallenge(0);
+
         Lemma.Challenge memory challenge = lemma.getChallenge(0);
         assertEq(challenge.expirationTimestamp, 0);
     }

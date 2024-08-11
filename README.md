@@ -27,8 +27,6 @@ This project includes the following components:
 - **Risc0 Bonsai:**
   - Integrates with Bonsai, Risc0's ZK CoProcessor
 
-## Features
-
 ## Showcase
 
 ![Market](marketing/screenshots/market.png)

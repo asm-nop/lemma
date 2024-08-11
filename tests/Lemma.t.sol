@@ -53,7 +53,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(address(lemma).balance, bounty);
     }
 
-    function test_createChallenge_RevertIfMinimumBountyNotMet() public {
+    function test_createChallenge_RevertIf_MinimumBountyNotMet() public {
         vm.deal(address(this), type(uint128).max);
         string memory challengeName = "And Commutativity";
         string
@@ -69,7 +69,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         );
     }
 
-    function test_createChallenge_RevertIfMinimumChallengeDurationNotMet()
+    function test_createChallenge_RevertIf_MinimumChallengeDurationNotMet()
         public
     {
         vm.deal(address(this), type(uint128).max);
@@ -176,7 +176,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         return inputs.solution;
     }
 
-    function test_submitSolution_RevertsIfChallengeDoesNotExist() public {
+    function test_submitSolution_RevertsIf_ChallengeDoesNotExist() public {
         ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
             sender: address(this),
             theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
@@ -199,7 +199,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         lemma.submitSolution(0, outputs.solutionHash, seal);
     }
 
-    function test_submitSolution_RevertsIfSolutionAlreadyExists() public {
+    function test_submitSolution_RevertsIf_SolutionAlreadyExists() public {
         submitMockAndCommuntativityChallenge();
         submitMockSolution();
 
@@ -238,6 +238,8 @@ contract LemmaTest is RiscZeroCheats, Test {
         string memory solution = submitMockSolution();
         uint256 balanceBefore = address(this).balance;
 
+        vm.expectEmit(true, true, true, true);
+        emit Lemma.ChallengeSolved(0);
         lemma.claimBounty(0, solution);
 
         uint256 balanceAfter = address(this).balance;
@@ -247,7 +249,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(challenge.expirationTimestamp, 0);
     }
 
-    function test_claimBounty_RevertsIfSolutionDoesNotExist() public {
+    function test_claimBounty_RevertsIf_SolutionDoesNotExist() public {
         submitMockAndCommuntativityChallenge();
 
         vm.expectRevert(Lemma.SolutionDoesNotExist.selector);
@@ -257,7 +259,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         );
     }
 
-    function test_claimBounty_RevertsIfInvalidSolution() public {
+    function test_claimBounty_RevertsIf_InvalidSolution() public {
         submitMockAndCommuntativityChallenge();
         submitMockSolution();
 
@@ -265,7 +267,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         lemma.claimBounty(0, "Bad solution");
     }
 
-    function test_claimBounty_RevertsIfInvalidSender() public {
+    function test_claimBounty_RevertsIf_InvalidSender() public {
         submitMockAndCommuntativityChallenge();
         submitMockSolution();
 
@@ -277,8 +279,6 @@ contract LemmaTest is RiscZeroCheats, Test {
         );
     }
 
-    // TODO: if time, test fail to claim bounty
-
     function test_terminateChallenge() public {
         submitMockAndCommuntativityChallenge();
         submitMockSolution();
@@ -289,11 +289,39 @@ contract LemmaTest is RiscZeroCheats, Test {
 
         lemma.terminateChallenge(0);
 
+        vm.expectEmit(true, true, true, true);
+        emit Lemma.ChallengeDeleted(0);
         Lemma.Challenge memory challenge = lemma.getChallenge(0);
         assertEq(challenge.expirationTimestamp, 0);
     }
 
-    // TODO: if time, test fail to terminate challenge
+    function test_terminateChallenge_RevertsIf_MsgSenderIsNotChallengeCreator()
+        public
+    {
+        submitMockAndCommuntativityChallenge();
+
+        uint256 expirationTimestamp = lemma.getChallenge(0).expirationTimestamp;
+
+        vm.warp(expirationTimestamp + 1);
+        vm.expectRevert(Lemma.MsgSenderIsNotChallengeCreator.selector);
+        vm.prank(address(1));
+        lemma.terminateChallenge(0);
+
+        Lemma.Challenge memory challenge = lemma.getChallenge(0);
+        assertEq(challenge.expirationTimestamp, expirationTimestamp);
+    }
+
+    function test_terminateChallenge_RevertsIf_ChallengeNotExpired() public {
+        submitMockAndCommuntativityChallenge();
+
+        uint256 expirationTimestamp = lemma.getChallenge(0).expirationTimestamp;
+
+        vm.expectRevert(Lemma.ChallengeNotExpired.selector);
+        lemma.terminateChallenge(0);
+
+        Lemma.Challenge memory challenge = lemma.getChallenge(0);
+        assertEq(challenge.expirationTimestamp, expirationTimestamp);
+    }
 
     fallback() external payable {}
 }

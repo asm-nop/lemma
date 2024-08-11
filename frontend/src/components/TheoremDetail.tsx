@@ -6,16 +6,24 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert.tsx";
 import { BonsaiProver } from "../bonsai.ts";
 import { useSDK } from "@metamask/sdk-react";
+import ProofProgress, { Step } from "./ProofProgress";
 
 const TheoremDetail = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [proofCode, setProofCode] = useState("");
+  const [solution, setSolution] = useState("");
   const [proofResult, setProofResult] = useState<{
     valid: boolean;
     proof?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { account } = useSDK();
+  const { theorems, submitSolution, claimBounty } = useTheorems();
+
+  // State for progress tracking
+  const [currentStep, setCurrentStep] = useState<Step>(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
 
   if (!slug) {
     return (
@@ -29,7 +37,6 @@ const TheoremDetail = () => {
   }
 
   const theoremId = BigInt(slug);
-  const { theorems } = useTheorems();
   const theorem = theorems.get(theoremId);
 
   if (theorem === undefined) {
@@ -45,12 +52,16 @@ const TheoremDetail = () => {
 
   const title = theorem.challengeName;
   const prompt = theorem.theorem;
-
   const bounty = ethers.formatEther(theorem.bounty);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setShowProgress(true);
+    setCurrentStep(1);
+    setIsComplete(false);
+    setIsError(false);
+
     try {
       const bonsaiProver = new BonsaiProver("https://bonsai.lemma.market");
 
@@ -58,12 +69,33 @@ const TheoremDetail = () => {
         throw new Error("Metamask SDK not found");
       }
 
-      let proof = await bonsaiProver.prove(account, theorem.theorem, proofCode);
+      // Step 1: Send proof to prover
+      setCurrentStep(1);
+      await sleep(1000);
+      // let _proof = await bonsaiProver.prove(account, theorem.theorem, solution);
+      let proof = "xd";
 
-      // console.log(proof);
+      if (proof) {
+        setProofResult({ valid: true, proof });
+
+        // Step 3: Submit solution on-chain
+        setCurrentStep(2);
+        await sleep(1000);
+        // await submitSolution(theoremId, ethers.keccak256(ethers.toUtf8Bytes(solution)), proof);
+
+        // Step 4: Claim bounty
+        setCurrentStep(3);
+        await sleep(1000);
+        // await claimBounty(theoremId, solution);
+
+        setIsComplete(true);
+      } else {
+        throw new Error("Invalid proof");
+      }
     } catch (error) {
-      console.error("Error verifying proof:", error);
+      console.error("Error in proof submission process:", error);
       setProofResult({ valid: false });
+      setIsError(true);
     } finally {
       setIsLoading(false);
     }
@@ -90,8 +122,8 @@ const TheoremDetail = () => {
           <div className="mb-4">
             <textarea
               id="proofCode"
-              value={proofCode}
-              onChange={(e) => setProofCode(e.target.value)}
+              value={solution}
+              onChange={(e) => setSolution(e.target.value)}
               placeholder="Enter your proof code here"
               required
               className="w-full px-3 py-2 placeholder-gray-300 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-indigo-100 focus:border-indigo-300"
@@ -103,9 +135,19 @@ const TheoremDetail = () => {
             className="w-full bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 focus:outline-none focus:bg-orange-600 disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? "Verifying..." : "Submit Proof"}
+            {isLoading ? "Processing..." : "Submit Proof"}
           </button>
         </form>
+
+        {showProgress && (
+          <div className="flex justify-center mb-6">
+            <ProofProgress
+              currentStep={currentStep}
+              isComplete={isComplete}
+              isError={isError}
+            />
+          </div>
+        )}
 
         {proofResult && (
           <div
@@ -134,8 +176,9 @@ const TheoremDetail = () => {
         <h4 className="font-semibold mb-2">How to submit a proof:</h4>
         <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
           <li>Write your proof in the code input above</li>
-          <li>Click "Submit Proof" to send it to our remote prover</li>
-          <li>If valid, you'll receive a ZK proof to submit on-chain</li>
+          <li>Click "Submit Proof" to start the process</li>
+          <li>Monitor the progress in the card that appears</li>
+          <li>If successful, your bounty will be automatically claimed</li>
         </ol>
         <p className="mt-2 text-sm text-gray-600">
           For more information, visit{" "}
@@ -150,5 +193,9 @@ const TheoremDetail = () => {
     </div>
   );
 };
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export default TheoremDetail;

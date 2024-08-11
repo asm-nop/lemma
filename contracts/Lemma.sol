@@ -191,7 +191,7 @@ contract Lemma {
             revert InvalidSender();
         }
 
-        (bool sent, bytes memory data) = msg.sender.call{value: bounty}("");
+        (bool sent, bytes memory data) = msg.sender.call{value: challenge.bounty}("");
 
         // Delete the challenge
         delete challenges[challengeId];

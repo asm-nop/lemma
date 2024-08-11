@@ -178,7 +178,62 @@ contract LemmaTest is RiscZeroCheats, Test {
         return inputs.solution;
     }
 
-    // TODO: if time, test fail to submit solution
+    function test_submitSolution_RevertsIfChallengeDoesNotExist() public {
+        ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
+            sender: address(this),
+            theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
+            solution: "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
+        });
+
+        vm.setEnv("RISC0_DEV_MODE", "true");
+
+        (bytes memory journal, bytes memory seal) = prove(
+            Elf.LEMMA_PATH,
+            abi.encode(inputs)
+        );
+
+        ILemma.Risc0Outputs memory outputs = abi.decode(
+            journal,
+            (ILemma.Risc0Outputs)
+        );
+
+        vm.expectRevert(Lemma.ChallengeDoesNotExist.selector);
+        lemma.submitSolution(0, outputs.solutionHash, seal);
+    }
+
+    function test_submitSolution_RevertsIfSolutionAlreadyExists() public {
+        submitMockAndCommuntativityChallenge();
+        submitMockSolution();
+
+        address newSender = address(1);
+        ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
+            sender: newSender,
+            theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
+            solution: "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
+        });
+
+        vm.setEnv("RISC0_DEV_MODE", "true");
+
+        (bytes memory journal, bytes memory seal) = prove(
+            Elf.LEMMA_PATH,
+            abi.encode(inputs)
+        );
+
+        ILemma.Risc0Outputs memory outputs = abi.decode(
+            journal,
+            (ILemma.Risc0Outputs)
+        );
+
+        Lemma.Solution memory solution = lemma.getSolution(0);
+        bytes memory errorData = abi.encodeWithSelector(
+            Lemma.SolutionAlreadyExists.selector,
+            solution.expirationTimestamp
+        );
+
+        vm.expectRevert(errorData);
+        vm.prank(newSender);
+        lemma.submitSolution(0, outputs.solutionHash, seal);
+    }
 
     function test_claimBounty() public {
         submitMockAndCommuntativityChallenge();

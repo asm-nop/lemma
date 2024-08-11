@@ -28,7 +28,7 @@ const Header: React.FC = () => {
   const connected = account !== undefined;
 
   return (
-    <header className="bg-orange-300 text-white p-4">
+    <header className="bg-orange-400 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
         <h1 className="text-2xl font-bold">
           <Link className="hover:underline" to="/">

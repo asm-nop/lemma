@@ -16,6 +16,8 @@
 // to the Bonsai proving service and publish the received proofs directly
 // to your deployed app contract.
 
+use std::time::Duration;
+
 use alloy_primitives::{address, Address, U256};
 use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
@@ -24,7 +26,19 @@ use ethers::prelude::*;
 use lemma_core::{Inputs, Outputs};
 use methods::LEMMA_ELF;
 use risc0_ethereum_contracts::groth16;
-use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
+use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, Receipt, VerifierContext};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+pub struct ProveRequest {
+    pub inputs: Inputs,
+    pub elf: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ProveResponse {
+    pub receipt: Receipt,
+}
 
 // `ILemma` interface automatically generated via the alloy `sol!` macro.
 sol! {
@@ -80,6 +94,9 @@ impl TxSender {
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
+    #[clap(long)]
+    relay: bool,
+
     /// Ethereum chain ID
     #[clap(long)]
     chain_id: u64,
@@ -127,23 +144,39 @@ fn main() -> Result<()> {
                 .to_string(),
     };
 
-    let input = match args.input {
+    let inputs = match args.input {
         Some(input) => serde_json::from_str::<Inputs>(&input)?,
         None => test_input,
     };
 
     let env = ExecutorEnv::builder()
-        .write_slice(&input.abi_encode())
+        .write_slice(&inputs.abi_encode())
         .build()?;
 
-    let receipt = default_prover()
-        .prove_with_ctx(
-            env,
-            &VerifierContext::default(),
-            LEMMA_ELF,
-            &ProverOpts::groth16(),
-        )?
-        .receipt;
+    let receipt = if args.relay {
+        let req = ProveRequest {
+            inputs,
+            elf: LEMMA_ELF.to_vec(),
+        };
+        let res = reqwest::blocking::Client::builder()
+            .timeout(Duration::from_secs(90))
+            .build()?
+            .post("https://lemma-relay-vaqzy.ondigitalocean.app/prove")
+            .json(&req)
+            .send()?
+            .json::<ProveResponse>()?;
+
+        res.receipt
+    } else {
+        default_prover()
+            .prove_with_ctx(
+                env,
+                &VerifierContext::default(),
+                LEMMA_ELF,
+                &ProverOpts::groth16(),
+            )?
+            .receipt
+    };
 
     // Encode the seal with the selector.
     let seal = groth16::encode(receipt.inner.groth16()?.seal.clone())?;
@@ -160,7 +193,7 @@ fn main() -> Result<()> {
     // the ABI-encoded function call for the set function of the EvenNumber contract.
     // This call includes the verified number, the post-state digest, and the seal (proof).
     let calldata = ILemma::ILemmaCalls::submitSolution(ILemma::submitSolutionCall {
-        challengeId: U256::from(0),
+        challengeId: U256::from(1),
         solutionHash: outputs.solution_hash.into(),
         seal: seal.into(),
     })

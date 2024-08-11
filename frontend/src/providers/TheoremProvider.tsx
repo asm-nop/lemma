@@ -53,7 +53,7 @@ const ABI: string[] = [
 ];
 
 // Address of your deployed contract
-const CONTRACT_ADDRESS = "0xf87aa8113c240a5fe39e9c7eb4d354c3ae16fdfb"; // Replace with your contract address
+const CONTRACT_ADDRESS = "0x703BC2340396F9DDCdECCdD14D5e3416e44F5633"; // Replace with your contract address
 
 export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
   children,

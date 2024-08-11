@@ -16,7 +16,7 @@
 // to the Bonsai proving service and publish the received proofs directly
 // to your deployed app contract.
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{address, Address, U256};
 use alloy_sol_types::{sol, SolInterface, SolValue};
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -58,9 +58,11 @@ impl TxSender {
 
     /// Send a transaction with the given calldata.
     pub async fn send(&self, calldata: Vec<u8>) -> Result<Option<TransactionReceipt>> {
+        let address: H160 = self.contract.to_string().parse().unwrap();
+
         let tx = TransactionRequest::new()
             .chain_id(self.chain_id)
-            .to(self.contract.to_string())
+            .to(NameOrAddress::Address(address))
             .from(self.client.address())
             .data(calldata);
 
@@ -115,7 +117,7 @@ fn main() -> Result<()> {
     // ABI encode input: Before sending the proof request to the Bonsai proving service,
     // the input number is ABI-encoded to match the format expected by the guest code running in the zkVM.
     let test_input = Inputs {
-        sender: Address::default(),
+        sender: address!("5B5D0637FD86EcB92a41939c04c5eB27B72C6128"),
         theorem: r#"
                 def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
                 def and_comm (A B: Prop): (And A B) -> (And B A) := "#
@@ -152,14 +154,14 @@ fn main() -> Result<()> {
     // Decode Journal: Upon receiving the proof, the application decodes the journal to extract
     // the verified number. This ensures that the number being submitted to the blockchain matches
     // the number that was verified off-chain.
-    let _ = Outputs::abi_decode(&journal, true).context("decoding journal data")?;
+    let outputs = Outputs::abi_decode(&journal, true).context("decoding journal data")?;
 
     // Construct function call: Using the IEvenNumber interface, the application constructs
     // the ABI-encoded function call for the set function of the EvenNumber contract.
     // This call includes the verified number, the post-state digest, and the seal (proof).
     let calldata = ILemma::ILemmaCalls::submitSolution(ILemma::submitSolutionCall {
         challengeId: U256::from(0),
-        solutionHash: [0u8; 32].into(),
+        solutionHash: outputs.solution_hash.into(),
         seal: seal.into(),
     })
     .abi_encode();

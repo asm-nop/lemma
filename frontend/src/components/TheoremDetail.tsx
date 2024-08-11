@@ -63,7 +63,7 @@ const TheoremDetail = () => {
     setIsError(false);
 
     try {
-      const bonsaiProver = new BonsaiProver("http://64.227.105.217:3000");
+      const bonsaiProver = new BonsaiProver("https://lemma-relay-vaqzy.ondigitalocean.app");
 
       if (!account) {
         throw new Error("Metamask SDK not found");
@@ -78,14 +78,27 @@ const TheoremDetail = () => {
 
         setProofResult({ valid: true, proof: "Ok" });
 
-        const sealHex = toHexString(proof.receipt.inner.Groth16.seal);
-        const journalHex = toHexString(proof.receipt.journal.bytes);
+        const groth16Selector = "310fe598";
+
+        const sealHex =
+          "0x" +
+          groth16Selector +
+          toHexString(proof.receipt.inner.Groth16.seal);
+        const journalHex = "0x" + toHexString(proof.receipt.journal.bytes);
 
         console.log("Seal:", sealHex);
         console.log("Journal:", journalHex);
 
         const coder = new ethers.AbiCoder();
-        let [sender, solutionHash] = coder.decode(["address", "bytes32"], journalHex);
+        let [sender, solutionHash] = coder.decode(
+          ["address", "bytes32"],
+          journalHex
+        );
+
+        if (sender !== account) {
+          throw new Error("Invalid sender");
+        }
+
         console.log(sender);
         console.log(solutionHash);
 
@@ -206,7 +219,7 @@ const TheoremDetail = () => {
 };
 
 function toHexString(arr: number[]) {
-  return '0x' + arr.map(num => num.toString(16).padStart(2, '0')).join('');
+  return arr.map((num) => num.toString(16).padStart(2, "0")).join("");
 }
 
 async function sleep(ms: number) {

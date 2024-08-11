@@ -5,7 +5,8 @@ use axum::Json;
 use color_eyre::eyre;
 use color_eyre::eyre::eyre;
 use lemma_core::Inputs;
-use risc0_zkvm::Receipt;
+use risc0_ethereum_contracts::groth16;
+use risc0_zkvm::{InnerReceipt, Receipt};
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -87,7 +88,7 @@ fn load_config() -> eyre::Result<configuration::RelayConfig> {
 }
 
 async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveResponse>> {
-    let receipt = tokio::task::spawn_blocking(move || {
+    let mut receipt = tokio::task::spawn_blocking(move || {
         std::thread::spawn(move || {
             let env = ExecutorEnv::builder()
                 .write_slice(&payload.inputs.abi_encode())
@@ -112,6 +113,13 @@ async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveRespons
     .unwrap()
     .receipt
     .clone();
+
+    // Attach the selector to the seal
+    if let InnerReceipt::Groth16(g) = &mut receipt.inner {
+        g.seal = groth16::encode(g.seal.clone()).unwrap();
+    }
+
     println!("here");
+
     Ok(Json(ProveResponse { receipt }))
 }

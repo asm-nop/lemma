@@ -63,7 +63,7 @@ const TheoremDetail = () => {
     setIsError(false);
 
     try {
-      const bonsaiProver = new BonsaiProver("https://bonsai.lemma.market");
+      const bonsaiProver = new BonsaiProver("http://64.227.105.217:3000");
 
       if (!account) {
         throw new Error("Metamask SDK not found");
@@ -71,22 +71,33 @@ const TheoremDetail = () => {
 
       // Step 1: Send proof to prover
       setCurrentStep(1);
-      await sleep(1000);
-      // let _proof = await bonsaiProver.prove(account, theorem.theorem, solution);
-      let proof = "xd";
+      let proof = await bonsaiProver.prove(account, theorem.theorem, solution);
 
       if (proof) {
-        setProofResult({ valid: true, proof });
+        console.log(proof);
+
+        setProofResult({ valid: true, proof: "Ok" });
+
+        const sealHex = toHexString(proof.receipt.inner.Groth16.seal);
+        const journalHex = toHexString(proof.receipt.journal.bytes);
+
+        console.log("Seal:", sealHex);
+        console.log("Journal:", journalHex);
+
+        const coder = new ethers.AbiCoder();
+        let [sender, solutionHash] = coder.decode(["address", "bytes32"], journalHex);
+        console.log(sender);
+        console.log(solutionHash);
 
         // Step 3: Submit solution on-chain
         setCurrentStep(2);
-        await sleep(1000);
-        // await submitSolution(theoremId, ethers.keccak256(ethers.toUtf8Bytes(solution)), proof);
+        console.log("Submitting solution...");
+        await submitSolution(theoremId, solutionHash, sealHex);
 
         // Step 4: Claim bounty
         setCurrentStep(3);
-        await sleep(1000);
-        // await claimBounty(theoremId, solution);
+        console.log("Claiming bounty...");
+        await claimBounty(theoremId, solution);
 
         setIsComplete(true);
       } else {
@@ -193,6 +204,10 @@ const TheoremDetail = () => {
     </div>
   );
 };
+
+function toHexString(arr: number[]) {
+  return '0x' + arr.map(num => num.toString(16).padStart(2, '0')).join('');
+}
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

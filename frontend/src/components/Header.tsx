@@ -1,6 +1,6 @@
 import { useSDK } from "@metamask/sdk-react";
-import { ChevronLeft, ChevronRight, CircleUser, Dot, Power, PowerOff } from "lucide-react";
-import React, { useState } from "react";
+import { ChevronLeft, ChevronRight, Dot, Power, PowerOff } from "lucide-react";
+import React from "react";
 import { Link } from "react-router-dom";
 
 const Header: React.FC = () => {

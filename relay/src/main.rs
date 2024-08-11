@@ -2,25 +2,23 @@ use alloy_sol_types::SolValue;
 use axum::http::Method;
 use axum::routing::{post, put};
 use axum::Json;
-use clap::Parser;
 use color_eyre::eyre;
 use color_eyre::eyre::eyre;
-use configuration::RelayConfig;
 use lemma_core::Inputs;
-use risc0_zkvm::Receipt;
+use risc0_ethereum_contracts::groth16;
+use risc0_zkvm::{InnerReceipt, Receipt};
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::path::PathBuf;
+use std::sync::Arc;
 pub mod configuration;
 use axum::{
-    body::{self, Bytes},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::get,
     Router,
 };
 use tower_http::cors::{Any, CorsLayer};
+
+static LEMMA_ELF: &[u8] = include_bytes!("../../lemma.elf");
 
 #[derive(Serialize, Deserialize)]
 pub struct ProveRequest {
@@ -66,14 +64,16 @@ async fn main() -> eyre::Result<()> {
     let cors = CorsLayer::new()
         // allow `GET` and `POST` when accessing the resource
         .allow_methods([Method::GET, Method::POST])
+        .allow_headers(Any)
         // allow requests from any origin
         .allow_origin(Any);
 
-    let app = Router::new().layer(cors).route("/prove", post(prove));
+    let app = Router::new().route("/prove", post(prove)).layer(cors);
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await?;
+
     Ok(())
 }
 
@@ -88,19 +88,38 @@ fn load_config() -> eyre::Result<configuration::RelayConfig> {
 }
 
 async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveResponse>> {
-    let env = ExecutorEnv::builder()
-        .write_slice(&payload.inputs.abi_encode())
-        .build()
-        .map_err(|e| eyre!(e))?;
+    let mut receipt = tokio::task::spawn_blocking(move || {
+        std::thread::spawn(move || {
+            let env = ExecutorEnv::builder()
+                .write_slice(&payload.inputs.abi_encode())
+                .build()
+                .map_err(|e| eyre!(e))
+                .unwrap();
+            let res = default_prover()
+                .prove_with_ctx(
+                    env,
+                    &VerifierContext::default(),
+                    // payload.elf.as_slice(),
+                    LEMMA_ELF,
+                    &ProverOpts::groth16(),
+                )
+                .unwrap();
+            Arc::new(res)
+        })
+        .join()
+        .unwrap()
+    })
+    .await
+    .unwrap()
+    .receipt
+    .clone();
 
-    let receipt = default_prover()
-        .prove_with_ctx(
-            env,
-            &VerifierContext::default(),
-            payload.elf.as_slice(),
-            &ProverOpts::groth16(),
-        )
-        .map_err(|e| eyre!(e))?
-        .receipt;
+    // Attach the selector to the seal
+    if let InnerReceipt::Groth16(g) = &mut receipt.inner {
+        g.seal = groth16::encode(g.seal.clone()).unwrap();
+    }
+
+    println!("here");
+
     Ok(Json(ProveResponse { receipt }))
 }

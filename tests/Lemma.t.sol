@@ -35,6 +35,8 @@ contract LemmaTest is RiscZeroCheats, Test {
         uint256 expirationTimestamp = vm.getBlockTimestamp() + 1 days;
         uint256 bounty = 1 ether;
 
+        vm.expectEmit(true, true, true, true);
+        emit Lemma.ChallengeCreated(0, expirationTimestamp, address(this));
         uint256 challengeId = lemma.createChallenge{value: bounty}(
             challengeName,
             theorem,
@@ -51,7 +53,39 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(address(lemma).balance, bounty);
     }
 
-    // TODO: if time test fail to create challenge
+    function test_createChallenge_RevertIfMinimumBountyNotMet() public {
+        vm.deal(address(this), type(uint128).max);
+        string memory challengeName = "And Commutativity";
+        string
+            memory theorem = "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C def and_comm (A B: Prop): (And A B) -> (And B A) := ";
+        uint256 expirationTimestamp = vm.getBlockTimestamp() + 1 days;
+        uint256 bounty = 100 wei;
+
+        vm.expectRevert(Lemma.MinimumBounty.selector);
+        lemma.createChallenge{value: bounty}(
+            challengeName,
+            theorem,
+            expirationTimestamp
+        );
+    }
+
+    function test_createChallenge_RevertIfMinimumChallengeDurationNotMet()
+        public
+    {
+        vm.deal(address(this), type(uint128).max);
+        string memory challengeName = "And Commutativity";
+        string
+            memory theorem = "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C def and_comm (A B: Prop): (And A B) -> (And B A) := ";
+        uint256 expirationTimestamp = vm.getBlockTimestamp() + 1 hours;
+        uint256 bounty = 1 ether;
+
+        vm.expectRevert(Lemma.MinimumChallengeDuration.selector);
+        lemma.createChallenge{value: bounty}(
+            challengeName,
+            theorem,
+            expirationTimestamp
+        );
+    }
 
     function submitMockAndCommuntativityChallenge() public {
         vm.deal(address(this), type(uint128).max);
@@ -146,29 +180,25 @@ contract LemmaTest is RiscZeroCheats, Test {
 
     // TODO: if time, test fail to submit solution
 
-    // TODO: test claim bounty
-
     function test_claimBounty() public {
         submitMockAndCommuntativityChallenge();
-        string memory x = submitMockSolution();
+        string memory solution = submitMockSolution();
         uint256 balanceBefore = address(this).balance;
-        string
-            memory solution = "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)";
-
-        Lemma.Challenge memory challenge = lemma.getChallenge(0);
 
         lemma.claimBounty(0, solution);
+
         uint256 balanceAfter = address(this).balance;
         assertEq(balanceAfter - balanceBefore, 1 ether);
+
+        Lemma.Challenge memory challenge = lemma.getChallenge(0);
+        assertEq(challenge.expirationTimestamp, 0);
     }
 
     // TODO: if time, test fail to claim bounty
 
-    // TODO: test terminate challenge
-
     function test_terminateChallenge() public {
         submitMockAndCommuntativityChallenge();
-        string memory x = submitMockSolution();
+        submitMockSolution();
 
         uint256 expirationTimestamp = lemma.getChallenge(0).expirationTimestamp;
 

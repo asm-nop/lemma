@@ -1,4 +1,5 @@
 import { useSDK } from "@metamask/sdk-react";
+import { ChevronLeft, ChevronRight, Dot } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -30,12 +31,15 @@ const Header: React.FC = () => {
     <header className="bg-orange-300 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
         <h1 className="text-2xl font-bold">
-          <Link to="/">Lemma</Link>
+          <Link to="/">
+            <ChevronLeft className="inline" /> lemma <Dot className="inline" />{" "}
+            market <ChevronRight className="inline" />
+          </Link>
         </h1>
         <nav>
           <ul className="flex space-x-4">
             <li>
-                <Link to="/submit">Submit Theorem</Link>
+              <Link to="/submit">Submit Theorem</Link>
             </li>
             {connected ? (
               <li>

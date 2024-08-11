@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert.tsx";
 
 const SubmitTheorem = () => {
-  const { submit } = useTheorems();
+  const { createChallenge } = useTheorems();
   const [theoremCode, setTheoremCode] = useState("");
   const [bountyAmount, setBountyAmount] = useState("");
   const [theoremName, setTheoremName] = useState("");
@@ -26,7 +26,7 @@ const SubmitTheorem = () => {
       const expirationTimestamp =
         currentTimestamp + BigInt(parseInt(expirationDays) * 24 * 60 * 60);
 
-      await submit(theoremName, theoremCode, bountyWei, expirationTimestamp);
+      await createChallenge(theoremName, theoremCode, bountyWei, expirationTimestamp);
       setFeedback({
         type: "success",
         message: "Theorem submitted successfully!",

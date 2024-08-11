@@ -4,6 +4,8 @@ import { useTheorems } from "../providers/TheoremProvider";
 import { ethers } from "ethers";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert.tsx";
+import { BonsaiProver } from "../bonsai.ts";
+import { useSDK } from "@metamask/sdk-react";
 
 const TheoremDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -13,6 +15,7 @@ const TheoremDetail = () => {
     proof?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { account } = useSDK();
 
   if (!slug) {
     return (
@@ -49,21 +52,15 @@ const TheoremDetail = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Send the proof to the remote prover
-      const response = await fetch("https://api.example.com/prover", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ theorem: theorem.theorem, proof: proofCode }),
-      });
+      const bonsaiProver = new BonsaiProver("https://bonsai.lemma.market");
 
-      if (!response.ok) {
-        throw new Error("Failed to verify proof");
+      if (!account) {
+        throw new Error("Metamask SDK not found");
       }
 
-      const result = await response.json();
-      setProofResult(result);
+      let proof = await bonsaiProver.prove(account, theorem.theorem, proofCode);
+
+      // console.log(proof);
     } catch (error) {
       console.error("Error verifying proof:", error);
       setProofResult({ valid: false });

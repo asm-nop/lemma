@@ -23,7 +23,7 @@ interface TheoremContextType {
   theorems: Map<bigint, Theorem>;
   account: string | null;
   connectWallet: () => Promise<void>;
-  submit: (
+  createChallenge: (
     challengeName: string,
     theorem: string,
     bounty: bigint,
@@ -115,7 +115,7 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const submit = async (
+  const createChallenge = async (
     challengeName: string,
     theorem: string,
     bounty: bigint,
@@ -143,7 +143,7 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     theorems,
     account,
     connectWallet,
-    submit,
+    createChallenge,
   };
 
   return (

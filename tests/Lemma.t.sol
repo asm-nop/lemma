@@ -137,6 +137,8 @@ contract LemmaTest is RiscZeroCheats, Test {
             (ILemma.Risc0Outputs)
         );
 
+        Lemma.Challenge memory challenge = lemma.getChallenge(0);
+
         lemma.submitSolution(0, outputs.solutionHash, seal);
 
         return inputs.solution;
@@ -152,6 +154,9 @@ contract LemmaTest is RiscZeroCheats, Test {
         uint256 balanceBefore = address(this).balance;
         string
             memory solution = "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)";
+
+        Lemma.Challenge memory challenge = lemma.getChallenge(0);
+
         lemma.claimBounty(0, solution);
         uint256 balanceAfter = address(this).balance;
         assertEq(balanceAfter - balanceBefore, 1 ether);
@@ -162,4 +167,6 @@ contract LemmaTest is RiscZeroCheats, Test {
     // TODO: test terminate challenge
 
     // TODO: if time, test fail to terminate challenge
+
+    fallback() external payable {}
 }

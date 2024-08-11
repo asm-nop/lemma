@@ -182,9 +182,7 @@ contract Lemma {
             revert SolutionDoesNotExist();
         }
 
-        bytes32 solutionHash = keccak256(
-            abi.encode(challenge.theorem, solution)
-        );
+        bytes32 solutionHash = keccak256(abi.encode(solution));
 
         if (existingSolution.solutionHash != solutionHash) {
             revert InvalidSolution();

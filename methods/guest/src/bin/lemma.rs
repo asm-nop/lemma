@@ -16,7 +16,7 @@ use core::{Inputs, Outputs};
 use std::io::Read;
 
 use alloy_primitives::keccak256;
-use alloy_sol_types::{abi, SolValue};
+use alloy_sol_types::SolValue;
 use mini_proost::process_input;
 use risc0_zkvm::guest::env;
 
@@ -28,7 +28,7 @@ fn main() {
 
     let statement = inputs.theorem.clone() + "\n" + &inputs.solution;
 
-    let solution_hash = keccak256((inputs.theorem, inputs.solution).abi_encode());
+    let solution_hash = keccak256(inputs.solution.abi_encode());
 
     // Run the computation.
     // In this case, asserting that the provided number is even.

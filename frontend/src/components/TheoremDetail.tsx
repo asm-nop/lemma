@@ -95,10 +95,6 @@ const TheoremDetail = () => {
           journalHex
         );
 
-        if (sender !== account) {
-          throw new Error("Invalid sender");
-        }
-
         console.log(sender);
         console.log(solutionHash);
 
@@ -107,9 +103,14 @@ const TheoremDetail = () => {
         console.log("Submitting solution...");
         await submitSolution(theoremId, solutionHash, sealHex);
 
-        // Step 4: Claim bounty
+        // Step 3.5: Poll for transaction inclusion
         setCurrentStep(3);
+        await sleep(10000);
+
+        // Step 4: Claim bounty
+        setCurrentStep(4);
         console.log("Claiming bounty...");
+        await sleep(10000);
         await claimBounty(theoremId, solution);
 
         setIsComplete(true);

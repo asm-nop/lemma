@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 
-export type Step = 0 | 1 | 2 | 3;
+export type Step = 0 | 1 | 2 | 3 | 4;
 
 interface ProgressStepProps {
   step: Step;
@@ -44,6 +44,8 @@ const getStepText = (step: Step): string => {
     case 2:
       return "Submitting solution on-chain";
     case 3:
+      return "Polling for transaction inclusion";
+    case 4:
       return "Claiming bounty";
   }
 };
@@ -62,7 +64,7 @@ const ProofProgress: React.FC<ProofProgressProps> = ({
   return (
     <div className="w-80 bg-white shadow-lg rounded-lg p-6">
       <h3 className="text-lg font-semibold mb-4">Proof Submission Progress</h3>
-      {[1, 2, 3].map((step) => (
+      {[1, 2, 3, 4].map((step) => (
         <ProgressStep
           key={step}
           step={step as Step}

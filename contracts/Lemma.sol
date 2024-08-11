@@ -190,10 +190,6 @@ contract Lemma {
             revert ChallengeDoesNotExist();
         }
 
-        if (challenge.expirationTimestamp < block.timestamp) {
-            revert ChallengeNotExpired();
-        }
-
         Solution memory existingSolution = solutions[challengeId];
 
         if (existingSolution.expirationTimestamp == 0) {

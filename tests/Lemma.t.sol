@@ -171,8 +171,6 @@ contract LemmaTest is RiscZeroCheats, Test {
             (ILemma.Risc0Outputs)
         );
 
-        Lemma.Challenge memory challenge = lemma.getChallenge(0);
-
         lemma.submitSolution(0, outputs.solutionHash, seal);
 
         return inputs.solution;
@@ -247,6 +245,36 @@ contract LemmaTest is RiscZeroCheats, Test {
 
         Lemma.Challenge memory challenge = lemma.getChallenge(0);
         assertEq(challenge.expirationTimestamp, 0);
+    }
+
+    function test_claimBounty_RevertsIfSolutionDoesNotExist() public {
+        submitMockAndCommuntativityChallenge();
+
+        vm.expectRevert(Lemma.SolutionDoesNotExist.selector);
+        lemma.claimBounty(
+            0,
+            "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
+        );
+    }
+
+    function test_claimBounty_RevertsIfInvalidSolution() public {
+        submitMockAndCommuntativityChallenge();
+        submitMockSolution();
+
+        vm.expectRevert(Lemma.InvalidSolution.selector);
+        lemma.claimBounty(0, "Bad solution");
+    }
+
+    function test_claimBounty_RevertsIfInvalidSender() public {
+        submitMockAndCommuntativityChallenge();
+        submitMockSolution();
+
+        vm.expectRevert(Lemma.InvalidSender.selector);
+        vm.prank(address(1));
+        lemma.claimBounty(
+            0,
+            "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
+        );
     }
 
     // TODO: if time, test fail to claim bounty

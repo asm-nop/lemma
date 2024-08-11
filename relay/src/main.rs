@@ -1,21 +1,19 @@
 use alloy_sol_types::SolValue;
 use axum::http::Method;
-use axum::routing::{post, put};
+use axum::routing::post;
 use axum::Json;
-use color_eyre::eyre;
-use color_eyre::eyre::eyre;
-use lemma_core::Inputs;
-use risc0_ethereum_contracts::groth16;
-use risc0_zkvm::{InnerReceipt, Receipt};
-use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-pub mod configuration;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Router,
 };
+use color_eyre::eyre;
+use color_eyre::eyre::eyre;
+use lemma_core::Inputs;
+use risc0_zkvm::Receipt;
+use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 
 static LEMMA_ELF: &[u8] = include_bytes!("../../lemma.elf");
@@ -59,7 +57,6 @@ where
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
-    let config = load_config()?;
 
     let cors = CorsLayer::new()
         // allow `GET` and `POST` when accessing the resource
@@ -77,18 +74,8 @@ async fn main() -> eyre::Result<()> {
     Ok(())
 }
 
-fn load_config() -> eyre::Result<configuration::RelayConfig> {
-    let mut settings = config::Config::builder();
-
-    let settings = settings
-        .add_source(config::Environment::default().try_parsing(true))
-        .build()?;
-
-    Ok(settings.try_deserialize::<configuration::RelayConfig>()?)
-}
-
 async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveResponse>> {
-    let mut receipt = tokio::task::spawn_blocking(move || {
+    let receipt = tokio::task::spawn_blocking(move || {
         std::thread::spawn(move || {
             let env = ExecutorEnv::builder()
                 .write_slice(&payload.inputs.abi_encode())
@@ -113,13 +100,6 @@ async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveRespons
     .unwrap()
     .receipt
     .clone();
-
-    // Attach the selector to the seal
-    if let InnerReceipt::Groth16(g) = &mut receipt.inner {
-        g.seal = groth16::encode(g.seal.clone()).unwrap();
-    }
-
-    println!("here");
 
     Ok(Json(ProveResponse { receipt }))
 }

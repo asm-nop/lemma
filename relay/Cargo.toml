@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.7" }
-config = "0.14"
 alloy-primitives = { workspace = true }
 alloy-sol-types = { workspace = true }
 color-eyre = "0.6"

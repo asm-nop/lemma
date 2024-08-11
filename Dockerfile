@@ -1,7 +1,6 @@
 FROM debian:12 as build-env
 
 WORKDIR /src
-SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 RUN apt-get update && \
@@ -13,6 +12,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 ENV RUSTUP_HOME="/root/.rustup"
 ENV CARGO_HOME="/root/.cargo"
 
+
 COPY . .
 
 # Build the load-tester
@@ -23,5 +23,6 @@ FROM gcr.io/distroless/cc-debian12:nonroot
 
 # Copy the load-tester binary
 COPY --from=build-env --chown=0:10001 --chmod=010 /src/target/release/relay /bin/relay
+
 
 ENTRYPOINT [ "/bin/relay" ]

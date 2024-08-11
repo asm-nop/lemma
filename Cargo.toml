@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["apps", "methods", "core"]
+members = ["apps", "methods", "core", "relay"]
 exclude = ["lib"]
 
 [workspace.package]

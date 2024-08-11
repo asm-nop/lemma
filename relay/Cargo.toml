@@ -1,0 +1,22 @@
+[package]
+name = "relay"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+axum = { version = "0.7" }
+config = "0.14"
+alloy-primitives = { workspace = true }
+alloy-sol-types = { workspace = true }
+color-eyre = "0.6"
+lemma-core = { path = "../core", package = "core" }
+clap = { version = "4.0", features = ["derive", "env"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0" }
+env_logger = { version = "0.10" }
+ethers = { workspace = true }
+log = { workspace = true }
+methods = { workspace = true }
+risc0-ethereum-contracts = { workspace = true }
+risc0-zkvm = { workspace = true, features = ["client"] }
+tokio = { version = "1.35", features = ["full"] }

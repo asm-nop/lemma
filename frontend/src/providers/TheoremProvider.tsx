@@ -23,12 +23,20 @@ interface TheoremContextType {
   theorems: Map<bigint, Theorem>;
   account: string | null;
   connectWallet: () => Promise<void>;
-  submit: (
+  createChallenge: (
     challengeName: string,
     theorem: string,
     bounty: bigint,
     expirationTimestamp: bigint
   ) => Promise<void>;
+
+  submitSolution: (
+    challengeId: bigint,
+    solutionHash: string,
+    seal: string
+  ) => Promise<void>;
+
+  claimBounty: (challengeId: bigint, solution: string) => Promise<void>;
 }
 
 // Create the context
@@ -40,6 +48,8 @@ const ABI: string[] = [
   "function challengeNonce() public view returns (uint256)",
   "function challenges(uint256 nonce) public view returns (address,uint256,string,string,uint256,uint256)",
   "function createChallenge(string,string,uint256) public payable returns (uint256)",
+  "function submitSolution(uint256,bytes32,bytes) public",
+  "function claimBounty(uint256,string) public",
 ];
 
 // Address of your deployed contract
@@ -115,7 +125,7 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const submit = async (
+  const createChallenge = async (
     challengeName: string,
     theorem: string,
     bounty: bigint,
@@ -133,6 +143,22 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
+  const submitSolution = async (
+    challengeId: bigint,
+    solutionHash: string,
+    seal: string
+  ) => {
+    const contract = await getContract();
+
+    await contract.submitSolution(challengeId, solutionHash, seal);
+  };
+
+  const claimBounty = async (challengeId: bigint, solution: string) => {
+    const contract = await getContract();
+
+    await contract.claimBounty(challengeId, solution);
+  };
+
   useEffect(() => {
     if (account) {
       updateTheorems();
@@ -143,7 +169,9 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
     theorems,
     account,
     connectWallet,
-    submit,
+    createChallenge,
+    submitSolution,
+    claimBounty,
   };
 
   return (

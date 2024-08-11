@@ -2,26 +2,22 @@ use alloy_sol_types::SolValue;
 use axum::http::Method;
 use axum::routing::{post, put};
 use axum::Json;
-use clap::Parser;
 use color_eyre::eyre;
 use color_eyre::eyre::eyre;
-use configuration::RelayConfig;
 use lemma_core::Inputs;
 use risc0_zkvm::Receipt;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::path::PathBuf;
 use std::sync::Arc;
 pub mod configuration;
 use axum::{
-    body::{self, Bytes},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::get,
     Router,
 };
 use tower_http::cors::{Any, CorsLayer};
+
+static LEMMA_ELF: &[u8] = include_bytes!("../../lemma.elf");
 
 #[derive(Serialize, Deserialize)]
 pub struct ProveRequest {
@@ -103,7 +99,7 @@ async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveRespons
                     env,
                     &VerifierContext::default(),
                     // payload.elf.as_slice(),
-                    methods::LEMMA_ELF,
+                    LEMMA_ELF,
                     &ProverOpts::groth16(),
                 )
                 .unwrap();

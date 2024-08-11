@@ -1,6 +1,7 @@
 FROM debian:12 as build-env
 
 WORKDIR /src
+SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 RUN apt-get update && \
@@ -8,25 +9,14 @@ RUN apt-get update && \
 
 # Install rustup
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-
-# Copy all the source files
-# .dockerignore ignores the target dir
-# This includes the rust-toolchain.toml
-COPY . .
-
-# Set environment variables
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV RUSTUP_HOME="/root/.rustup"
 ENV CARGO_HOME="/root/.cargo"
 
-# Install the toolchain
-RUN rustup component add cargo
+COPY . .
 
 # Build the load-tester
 RUN cargo build --package relay --release
-
-# Make sure it runs
-RUN /src/target/release/relay --version
 
 # cc variant because we need libgcc and others
 FROM gcr.io/distroless/cc-debian12:nonroot

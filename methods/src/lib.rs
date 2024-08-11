@@ -23,6 +23,7 @@ mod tests {
     use risc0_zkvm::{default_executor, ExecutorEnv};
 
     use core::{Inputs, Outputs};
+    use std::io::Write;
 
     #[test]
     fn proves_valid_theorem() {
@@ -42,6 +43,13 @@ mod tests {
 
         // NOTE: Use the executor to run tests without proving.
         let session_info = default_executor().execute(env, super::LEMMA_ELF).unwrap();
+    }
+
+    #[test]
+    fn write_elf() {
+        let elf = super::LEMMA_ELF;
+        let mut file = std::fs::File::create("../lemma.elf").unwrap();
+        file.write_all(elf).unwrap();
     }
 
     #[test]

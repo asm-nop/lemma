@@ -23,10 +23,10 @@ import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 /// @notice
 contract Lemma {
     ///////////////////////////////////////////////////////////////////////////////
-    ///                                  TYPES                                ///
+    ///                                  TYPES                                 ///
     //////////////////////////////////////////////////////////////////////////////
 
-    //TODO: pack this struct
+    /// @dev These structs could be optimized, but for the sake of simplicity, we will keep them as is.
     struct Challenge {
         address creator;
         uint256 challengeId;
@@ -35,7 +35,7 @@ contract Lemma {
         uint256 bounty;
         uint256 expirationTimestamp;
     }
-    //TODO: pack structs
+
     struct Solution {
         bytes32 solutionHash;
         uint256 expirationTimestamp;
@@ -99,27 +99,29 @@ contract Lemma {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    ///                                  FUNCTIONS                                ///
+    ///                                  FUNCTIONS                              ///
     //////////////////////////////////////////////////////////////////////////////
 
+    /// @notice Returns the Challenge for a specified challengeId
     function getChallenge(
         uint256 challengeId
     ) public view returns (Challenge memory) {
         return challenges[challengeId];
     }
 
+    /// @notice Returns the Solution (if one has been submitted), for a specified challengeId.
     function getSolution(
         uint256 challengeId
     ) public view returns (Solution memory) {
         return solutions[challengeId];
     }
 
+    /// @notice Returns the current challenge nonce
     function getChallengeNonce() public view returns (uint256) {
         return challengeNonce;
     }
 
     /// @notice Creates a new challenge, returns its id
-    /// @dev note that theorem is theorem template
     function createChallenge(
         string calldata challengeName,
         string calldata theorem,
@@ -148,6 +150,7 @@ contract Lemma {
         return challengeId;
     }
 
+    /// @notice Submits a solution to a challenge, calling the RISC Zero verifier contract to verify the solution
     function submitSolution(
         uint256 challengeId,
         bytes32 solutionHash,
@@ -177,6 +180,8 @@ contract Lemma {
         );
     }
 
+    /// @notice Claims the bounty for a challenge once a valid solution has been submitted
+    /// @dev The keccak256 hash of the solution must match the solution hash stored in the Solution struct
     function claimBounty(uint256 challengeId, string calldata solution) public {
         /// @notice Check if the challenge exists
         /// @dev It is possible that the challenge expiration timestamp elapsed before the bounty was claimed
@@ -214,8 +219,7 @@ contract Lemma {
         emit ChallengeSolved(challengeId, msg.sender);
     }
 
-    /// @notice Terminates a challenge
-    /// Reclaims the bounty for the challenge creator
+    /// @notice Terminates a challenge and reclaims the bounty for the challenge creator
     function terminateChallenge(uint256 challengeId) public {
         Challenge storage challenge = challenges[challengeId];
 

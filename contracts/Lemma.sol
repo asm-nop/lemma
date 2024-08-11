@@ -167,7 +167,7 @@ contract Lemma {
     function claimBounty(uint256 challengeId, string calldata solution) public {
         /// @notice Check if the challenge exists
         /// @dev It is possible that the challenge expiration timestamp elapsed before the bounty was claimed
-        Challenge storage challenge = challenges[challengeId];
+        Challenge memory challenge = challenges[challengeId];
         if (challenge.expirationTimestamp == 0) {
             revert ChallengeDoesNotExist();
         }
@@ -182,7 +182,10 @@ contract Lemma {
             revert SolutionDoesNotExist();
         }
 
-        bytes32 solutionHash = keccak256(abi.encode(solution));
+        bytes32 solutionHash = keccak256(
+            abi.encode(challenge.theorem, solution)
+        );
+
         if (existingSolution.solutionHash != solutionHash) {
             revert InvalidSolution();
         }
@@ -191,7 +194,11 @@ contract Lemma {
             revert InvalidSender();
         }
 
-        (bool sent, bytes memory data) = msg.sender.call{value: challenge.bounty}("");
+        // TODO: safe transfer
+        (bool sent, bytes memory data) = msg.sender.call{
+            value: challenge.bounty
+        }("");
+        require(sent, "Failed to send Ether");
 
         // Delete the challenge
         delete challenges[challengeId];

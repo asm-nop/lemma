@@ -26,31 +26,6 @@ contract LemmaTest is RiscZeroCheats, Test {
         );
     }
 
-    // function test_AddChallenge() public {
-    //     uint256 ts = vm.getBlockTimestamp() + 1 days;
-    //     uint256 challengeId = lemma.createChallenge(
-    //         "My challenge",
-    //         ts,
-    //         1 ether
-    //     );
-
-    //     Lemma.Challenge memory challenge = lemma.getChallenge(challengeId);
-
-    //     assertEq(challenge.challengeId, challengeId);
-    //     assertEq(challenge.prompt, "My challenge");
-    //     assertEq(challenge.bounty, 1 ether);
-    //     assertEq(challenge.expirationTimestamp, ts);
-    // }
-
-    // function test_SolveChallenge() public {
-    //     (bytes memory journal, bytes memory seal) = prove(
-    //         Elf.LEMMA_PATH,
-    //         abi.encode(number)
-    //     );
-    // }
-
-    // TODO: test create challenge
-
     function test_createChallenge() public {
         vm.deal(address(this), type(uint128).max);
         string memory challengeName = "And Commutativity";
@@ -73,13 +48,12 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(challenge.bounty, bounty);
         assertEq(challenge.expirationTimestamp, expirationTimestamp);
         assertEq(challenge.challengeName, challengeName);
-
         assertEq(address(lemma).balance, bounty);
     }
 
     // TODO: if time test fail to create challenge
 
-    function submitAndCommuntativityChallenge() public {
+    function submitMockAndCommuntativityChallenge() public {
         vm.deal(address(this), type(uint128).max);
         string memory challengeName = "And Commutativity";
         string
@@ -112,7 +86,7 @@ contract LemmaTest is RiscZeroCheats, Test {
     }
 
     function test_submitSolution() public {
-        submitAndCommuntativityChallenge();
+        submitMockAndCommuntativityChallenge();
 
         ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
             sender: address(this),
@@ -144,9 +118,51 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(solution.sender, address(this));
     }
 
+    function submitMockSolution() public {
+        ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
+            sender: address(this),
+            theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
+            solution: "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)"
+        });
+
+        vm.setEnv("RISC0_DEV_MODE", "true");
+
+        (bytes memory journal, bytes memory seal) = prove(
+            Elf.LEMMA_PATH,
+            abi.encode(inputs)
+        );
+
+        ILemma.Risc0Outputs memory outputs = abi.decode(
+            journal,
+            (ILemma.Risc0Outputs)
+        );
+
+        lemma.submitSolution(0, outputs.solution_hash, seal);
+    }
+
     // TODO: if time, test fail to submit solution
 
     // TODO: test claim bounty
+
+    function test_claimBounty() public {
+        // bytes32 solutionHash = theorem
+        //     .toSlice()
+        //     .concat("\n".toSlice())
+        //     .concat(solution.toSlice())
+        //     .keccak256();
+        // console2.log(solutionHash);
+        // console2.log(x.toString());
+        // submitMockAndCommuntativityChallenge();
+        // submitMockSolution();
+        // uint256 balanceBefore = address(this).balance;
+        // //TODO: claim
+        // string
+        //     memory solution = "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)";
+        // lemma.claimBounty(0, solution);
+        // console2.log();
+        // uint256 balanceAfter = address(this).balance;
+        // assertEq(balanceAfter - balanceBefore, 1 ether);
+    }
 
     // TODO: if time, test fail to claim bounty
 

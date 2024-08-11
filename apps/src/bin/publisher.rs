@@ -97,6 +97,9 @@ struct Args {
     #[clap(long)]
     relay: bool,
 
+    #[clap(long)]
+    compare: bool,
+
     /// Ethereum chain ID
     #[clap(long)]
     chain_id: u64,
@@ -152,6 +155,38 @@ fn main() -> Result<()> {
     let env = ExecutorEnv::builder()
         .write_slice(&inputs.abi_encode())
         .build()?;
+
+    if args.compare {
+        let req = ProveRequest {
+            inputs,
+            elf: LEMMA_ELF.to_vec(),
+        };
+        let res = reqwest::blocking::Client::builder()
+            .timeout(Duration::from_secs(90))
+            .build()?
+            .post("https://lemma-relay-vaqzy.ondigitalocean.app/prove")
+            .json(&req)
+            .send()?
+            .json::<ProveResponse>()?;
+
+        let relay = res.receipt;
+        let reg = default_prover()
+            .prove_with_ctx(
+                env,
+                &VerifierContext::default(),
+                LEMMA_ELF,
+                &ProverOpts::groth16(),
+            )?
+            .receipt;
+        if format!("{relay:?}") != format!("{reg:?}") {
+            println!("failed");
+            println!("relay:\n{:?}", relay);
+            println!("reg:\n{:?}", reg);
+            return Ok(());
+        }
+        println!("passed");
+        return Ok(());
+    }
 
     let receipt = if args.relay {
         let req = ProveRequest {

@@ -1,16 +1,17 @@
-use std::path::PathBuf;
-
 use alloy_sol_types::SolValue;
 use axum::http::Method;
 use axum::routing::{post, put};
 use axum::Json;
 use clap::Parser;
+use color_eyre::eyre;
+use color_eyre::eyre::eyre;
 use configuration::RelayConfig;
 use lemma_core::Inputs;
 use risc0_zkvm::Receipt;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::path::PathBuf;
 pub mod configuration;
 use axum::{
     body::{self, Bytes},
@@ -35,7 +36,7 @@ pub struct ProveResponse {
 #[derive(Debug)]
 struct AppError(color_eyre::eyre::Report);
 
-type Result<T> = std::result::Result<T, AppError>;
+type AppResult<T> = Result<T, AppError>;
 
 // Tell axum how to convert `AppError` into a response.
 impl IntoResponse for AppError {
@@ -58,7 +59,7 @@ where
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
     let config = load_config()?;
 
@@ -76,7 +77,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn load_config() -> Result<configuration::RelayConfig> {
+fn load_config() -> eyre::Result<configuration::RelayConfig> {
     let mut settings = config::Config::builder();
 
     let settings = settings
@@ -86,10 +87,11 @@ fn load_config() -> Result<configuration::RelayConfig> {
     Ok(settings.try_deserialize::<configuration::RelayConfig>()?)
 }
 
-async fn prove(Json(payload): Json<ProveRequest>) -> Result<Json<ProveResponse>> {
+async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveResponse>> {
     let env = ExecutorEnv::builder()
         .write_slice(&payload.inputs.abi_encode())
-        .build()?;
+        .build()
+        .map_err(|e| eyre!(e))?;
 
     let receipt = default_prover()
         .prove_with_ctx(
@@ -97,7 +99,8 @@ async fn prove(Json(payload): Json<ProveRequest>) -> Result<Json<ProveResponse>>
             &VerifierContext::default(),
             payload.elf.as_slice(),
             &ProverOpts::groth16(),
-        )?
+        )
+        .map_err(|e| eyre!(e))?
         .receipt;
     Ok(Json(ProveResponse { receipt }))
 }

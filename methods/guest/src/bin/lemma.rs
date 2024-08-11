@@ -15,11 +15,10 @@
 use core::{Inputs, Outputs};
 use std::io::Read;
 
-use alloy_primitives::FixedBytes;
+use alloy_primitives::keccak256;
 use alloy_sol_types::{abi, SolValue};
 use mini_proost::process_input;
 use risc0_zkvm::guest::env;
-use risc0_zkvm::sha::{Impl, Sha256};
 
 fn main() {
     let mut input_bytes = Vec::<u8>::new();
@@ -31,7 +30,7 @@ fn main() {
     let statement_for_hashing =
         abi::encode(&(inputs.theorem.tokenize(), inputs.solution.tokenize()));
 
-    let sha = *Impl::hash_bytes(statement_for_hashing.as_slice());
+    let solution_hash = keccak256(statement_for_hashing);
 
     // Run the computation.
     // In this case, asserting that the provided number is even.
@@ -41,7 +40,7 @@ fn main() {
     // Journal is encoded using Solidity ABI for easy decoding in the app contract.
     // assert!(sha.len() == 32);
     let outputs = Outputs {
-        solution_hash: FixedBytes::from(sha.as_ref()),
+        solution_hash,
         sender: inputs.sender,
     };
     env::commit_slice(outputs.abi_encode().as_slice());

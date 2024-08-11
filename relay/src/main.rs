@@ -9,7 +9,6 @@ use configuration::RelayConfig;
 use lemma_core::Inputs;
 use risc0_zkvm::Receipt;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
-use rouille::{router, try_or_400};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -68,10 +67,11 @@ async fn main() -> eyre::Result<()> {
     let cors = CorsLayer::new()
         // allow `GET` and `POST` when accessing the resource
         .allow_methods([Method::GET, Method::POST])
+        .allow_headers(Any)
         // allow requests from any origin
         .allow_origin(Any);
 
-    let app = Router::new().layer(cors).route("/prove", post(prove));
+    let app = Router::new().route("/prove", post(prove)).layer(cors);
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;

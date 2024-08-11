@@ -28,7 +28,8 @@ fn main() {
     let inputs = <Inputs>::abi_decode(&input_bytes, true).unwrap();
 
     let statement = inputs.theorem.clone() + "\n" + &inputs.solution;
-    let statement_for_hashing = abi::encode(&(inputs.theorem.tokenize(), inputs.solution.tokenize()));
+    let statement_for_hashing =
+        abi::encode(&(inputs.theorem.tokenize(), inputs.solution.tokenize()));
 
     let sha = *Impl::hash_bytes(statement_for_hashing.as_slice());
 

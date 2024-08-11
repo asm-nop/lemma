@@ -106,11 +106,11 @@ contract LemmaTest is RiscZeroCheats, Test {
             (ILemma.Risc0Outputs)
         );
 
-        lemma.submitSolution(0, outputs.solution_hash, seal);
+        lemma.submitSolution(0, outputs.solutionHash, seal);
 
         Lemma.Solution memory solution = lemma.getSolution(0);
 
-        assertEq(solution.solutionHash, outputs.solution_hash);
+        assertEq(solution.solutionHash, outputs.solutionHash);
         assertEq(
             solution.expirationTimestamp,
             vm.getBlockTimestamp() + lemma.solutionExpirationTime()
@@ -118,7 +118,7 @@ contract LemmaTest is RiscZeroCheats, Test {
         assertEq(solution.sender, address(this));
     }
 
-    function submitMockSolution() public {
+    function submitMockSolution() public returns (string memory) {
         ILemma.Risc0Inputs memory inputs = ILemma.Risc0Inputs({
             sender: address(this),
             theorem: "def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C\ndef and_comm (A B: Prop): (And A B) -> (And B A) :=",
@@ -137,7 +137,9 @@ contract LemmaTest is RiscZeroCheats, Test {
             (ILemma.Risc0Outputs)
         );
 
-        lemma.submitSolution(0, outputs.solution_hash, seal);
+        lemma.submitSolution(0, outputs.solutionHash, seal);
+
+        return inputs.solution;
     }
 
     // TODO: if time, test fail to submit solution
@@ -145,23 +147,14 @@ contract LemmaTest is RiscZeroCheats, Test {
     // TODO: test claim bounty
 
     function test_claimBounty() public {
-        // bytes32 solutionHash = theorem
-        //     .toSlice()
-        //     .concat("\n".toSlice())
-        //     .concat(solution.toSlice())
-        //     .keccak256();
-        // console2.log(solutionHash);
-        // console2.log(x.toString());
-        // submitMockAndCommuntativityChallenge();
-        // submitMockSolution();
-        // uint256 balanceBefore = address(this).balance;
-        // //TODO: claim
-        // string
-        //     memory solution = "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)";
-        // lemma.claimBounty(0, solution);
-        // console2.log();
-        // uint256 balanceAfter = address(this).balance;
-        // assertEq(balanceAfter - balanceBefore, 1 ether);
+        submitMockAndCommuntativityChallenge();
+        string memory x = submitMockSolution();
+        uint256 balanceBefore = address(this).balance;
+        string
+            memory solution = "fun (f: And A B) (C: Prop) (bac: B -> A -> C) => f C (fun (a: A) (b: B) => bac b a)";
+        lemma.claimBounty(0, solution);
+        uint256 balanceAfter = address(this).balance;
+        assertEq(balanceAfter - balanceBefore, 1 ether);
     }
 
     // TODO: if time, test fail to claim bounty

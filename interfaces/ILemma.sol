@@ -12,7 +12,7 @@ interface ILemma {
 
     struct Risc0Outputs {
         address sender;
-        bytes32 solution_hash;
+        bytes32 solutionHash;
     }
 
     function getChallenge(

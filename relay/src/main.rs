@@ -9,9 +9,11 @@ use configuration::RelayConfig;
 use lemma_core::Inputs;
 use risc0_zkvm::Receipt;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
+use rouille::{router, try_or_400};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
+use std::sync::Arc;
 pub mod configuration;
 use axum::{
     body::{self, Bytes},
@@ -74,6 +76,7 @@ async fn main() -> eyre::Result<()> {
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await?;
+
     Ok(())
 }
 
@@ -88,19 +91,31 @@ fn load_config() -> eyre::Result<configuration::RelayConfig> {
 }
 
 async fn prove(Json(payload): Json<ProveRequest>) -> AppResult<Json<ProveResponse>> {
-    let env = ExecutorEnv::builder()
-        .write_slice(&payload.inputs.abi_encode())
-        .build()
-        .map_err(|e| eyre!(e))?;
-
-    let receipt = default_prover()
-        .prove_with_ctx(
-            env,
-            &VerifierContext::default(),
-            payload.elf.as_slice(),
-            &ProverOpts::groth16(),
-        )
-        .map_err(|e| eyre!(e))?
-        .receipt;
+    let receipt = tokio::task::spawn_blocking(move || {
+        std::thread::spawn(move || {
+            let env = ExecutorEnv::builder()
+                .write_slice(&payload.inputs.abi_encode())
+                .build()
+                .map_err(|e| eyre!(e))
+                .unwrap();
+            let res = default_prover()
+                .prove_with_ctx(
+                    env,
+                    &VerifierContext::default(),
+                    // payload.elf.as_slice(),
+                    methods::LEMMA_ELF,
+                    &ProverOpts::groth16(),
+                )
+                .unwrap();
+            Arc::new(res)
+        })
+        .join()
+        .unwrap()
+    })
+    .await
+    .unwrap()
+    .receipt
+    .clone();
+    println!("here");
     Ok(Json(ProveResponse { receipt }))
 }

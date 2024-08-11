@@ -4,17 +4,21 @@ use alloy_sol_types::SolValue;
 use axum::http::Method;
 use axum::routing::{post, put};
 use axum::Json;
-use axum::{routing::get, Router};
 use clap::Parser;
-use color_eyre::Result;
 use configuration::RelayConfig;
-pub use ethers::types::{Bytes, H256, U256};
 use lemma_core::Inputs;
 use risc0_zkvm::Receipt;
 use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 pub mod configuration;
+use axum::{
+    body::{self, Bytes},
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::get,
+    Router,
+};
 use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Serialize, Deserialize)]
@@ -26,6 +30,31 @@ pub struct ProveRequest {
 #[derive(Serialize, Deserialize)]
 pub struct ProveResponse {
     pub receipt: Receipt,
+}
+
+#[derive(Debug)]
+struct AppError(color_eyre::eyre::Report);
+
+type Result<T> = std::result::Result<T, AppError>;
+
+// Tell axum how to convert `AppError` into a response.
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something went wrong: {}", self.0),
+        )
+            .into_response()
+    }
+}
+
+impl<E> From<E> for AppError
+where
+    E: Into<color_eyre::eyre::Report>,
+{
+    fn from(err: E) -> Self {
+        Self(err.into())
+    }
 }
 
 #[tokio::main]
@@ -57,11 +86,10 @@ fn load_config() -> Result<configuration::RelayConfig> {
     Ok(settings.try_deserialize::<configuration::RelayConfig>()?)
 }
 
-async fn prove(Json(payload): Json<ProveRequest>) -> Json<ProveResponse> {
+async fn prove(Json(payload): Json<ProveRequest>) -> Result<Json<ProveResponse>> {
     let env = ExecutorEnv::builder()
         .write_slice(&payload.inputs.abi_encode())
-        .build()
-        .unwrap();
+        .build()?;
 
     let receipt = default_prover()
         .prove_with_ctx(
@@ -69,8 +97,7 @@ async fn prove(Json(payload): Json<ProveRequest>) -> Json<ProveResponse> {
             &VerifierContext::default(),
             payload.elf.as_slice(),
             &ProverOpts::groth16(),
-        )
-        .unwrap()
+        )?
         .receipt;
-    Json(ProveResponse { receipt })
+    Ok(Json(ProveResponse { receipt }))
 }

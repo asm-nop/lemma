@@ -208,7 +208,7 @@ contract Lemma {
     // TODO: add non reentrant
     /// @notice Terminates a challenge
     /// Reclaims the bounty for the challenge creator
-    function terminateChallenge(uint256 challengeId) internal {
+    function terminateChallenge(uint256 challengeId) public {
         Challenge storage challenge = challenges[challengeId];
 
         // TODO: check if expired and then if so you can terminate the challenge, anyone can terminate the challenge if it is expired
@@ -217,7 +217,7 @@ contract Lemma {
             revert MsgSenderIsNotChallengeCreator();
         }
 
-        if (challenge.expirationTimestamp < block.timestamp) {
+        if (challenge.expirationTimestamp > block.timestamp) {
             revert ChallengeNotExpired();
         }
 

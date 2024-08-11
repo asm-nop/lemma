@@ -166,6 +166,20 @@ contract LemmaTest is RiscZeroCheats, Test {
 
     // TODO: test terminate challenge
 
+    function test_terminateChallenge() public {
+        submitMockAndCommuntativityChallenge();
+        string memory x = submitMockSolution();
+
+        uint256 expirationTimestamp = lemma.getChallenge(0).expirationTimestamp;
+
+        vm.warp(expirationTimestamp + 1);
+
+        lemma.terminateChallenge(0);
+
+        Lemma.Challenge memory challenge = lemma.getChallenge(0);
+        assertEq(challenge.expirationTimestamp, 0);
+    }
+
     // TODO: if time, test fail to terminate challenge
 
     fallback() external payable {}

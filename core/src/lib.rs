@@ -1,6 +1,6 @@
 use alloy_sol_types::sol;
-// use risc0_zkvm::sha::Digest;
 use serde::{Deserialize, Serialize};
+pub use std::convert;
 
 sol! {
     #[derive(Serialize, Deserialize)]

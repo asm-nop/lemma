@@ -118,7 +118,6 @@ fn main() -> Result<()> {
         sender: Address::default(),
         theorem: r#"
                 def And (A B: Prop): Prop := (C: Prop) -> (A -> B -> C) -> C
-
                 def and_comm (A B: Prop): (And A B) -> (And B A) := "#
             .to_string(),
         solution:

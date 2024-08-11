@@ -61,8 +61,8 @@ contract LemmaTest is RiscZeroCheats, Test {
         uint256 bounty = 1 ether;
 
         uint256 challengeId = lemma.createChallenge{value: bounty}(
-            theorem,
             challengeName,
+            theorem,
             expirationTimestamp
         );
 
@@ -88,8 +88,8 @@ contract LemmaTest is RiscZeroCheats, Test {
         uint256 bounty = 1 ether;
 
         uint256 challengeId = lemma.createChallenge{value: bounty}(
-            theorem,
             challengeName,
+            theorem,
             expirationTimestamp
         );
 

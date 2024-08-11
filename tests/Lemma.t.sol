@@ -232,22 +232,22 @@ contract LemmaTest is RiscZeroCheats, Test {
         lemma.submitSolution(challengeNonce, outputs.solutionHash, seal);
     }
 
-    // function test_claimBountyxx() public {
-    //     submitMockAndCommuntativityChallenge();
-    //     string memory solution = submitMockSolution();
+    function test_claimBounty() public {
+        submitMockAndCommuntativityChallenge();
+        string memory solution = submitMockSolution();
 
-    //     uint256 challengeNonce = lemma.challengeNonce() - 1;
+        uint256 challengeNonce = lemma.challengeNonce() - 1;
 
-    //     uint256 balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance;
 
-    //     lemma.claimBounty(challengeNonce, solution);
+        lemma.claimBounty(challengeNonce, solution);
 
-    //     uint256 balanceAfter = address(this).balance;
-    //     assertEq(balanceAfter - balanceBefore, 1 ether);
+        uint256 balanceAfter = address(this).balance;
+        assertEq(balanceAfter - balanceBefore, 1 ether);
 
-    //     Lemma.Challenge memory challenge = lemma.getChallenge(1);
-    //     assertEq(challenge.expirationTimestamp, 1);
-    // }
+        Lemma.Challenge memory challenge = lemma.getChallenge(challengeNonce);
+        assertEq(challenge.expirationTimestamp, 0);
+    }
 
     function test_claimBounty_RevertsIf_SolutionDoesNotExist() public {
         submitMockAndCommuntativityChallenge();

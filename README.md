@@ -42,15 +42,33 @@ First, [install Rust] and [Foundry], and then restart your terminal.
 curl https://sh.rustup.rs -sSf | sh
 # Install Foundry
 curl -L https://foundry.paradigm.xyz | bash
+foundryup
 ```
 
 Next, you will need to install the `cargo risczero` tool.
 We'll use [`cargo binstall`][cargo-binstall] to get `cargo-risczero` installed, and then install the `risc0` toolchain.
 See [RISC Zero installation] for more details.
 
-```sh
+```bash
+# install solc
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    brew install solidity
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    if command -v lsb_release &> /dev/null && lsb_release -is | grep -q "Ubuntu"; then
+        sudo add-apt-repository ppa:ethereum/ethereum -y
+        sudo apt update
+        sudo apt install solc -y
+    else
+        echo "Unsupported Linux distribution. Please install Solidity manually."
+        exit 1
+    fi
+else
+    echo "Unsupported operating system. Please install Solidity manually."
+    exit 1
+fi
+
 cargo install cargo-binstall
-cargo binstall cargo-risczero
+cargo binstall cargo-risczero -y 
 cargo risczero install
 ```
 

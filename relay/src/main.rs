@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use alloy_sol_types::SolValue;
+use axum::http::Method;
 use axum::routing::{post, put};
 use axum::Json;
 use axum::{routing::get, Router};
@@ -14,6 +15,7 @@ use risc0_zkvm::{default_prover, ExecutorEnv, ProverOpts, VerifierContext};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 pub mod configuration;
+use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Serialize, Deserialize)]
 pub struct ProveRequest {
@@ -30,7 +32,14 @@ pub struct ProveResponse {
 async fn main() -> Result<()> {
     color_eyre::install()?;
     let config = load_config()?;
-    let app = Router::new().route("/prove", post(move |body| prove(body)));
+
+    let cors = CorsLayer::new()
+        // allow `GET` and `POST` when accessing the resource
+        .allow_methods([Method::GET, Method::POST])
+        // allow requests from any origin
+        .allow_origin(Any);
+
+    let app = Router::new().layer(cors).route("/prove", post(prove));
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;

@@ -27,10 +27,8 @@ fn main() {
     let inputs = <Inputs>::abi_decode(&input_bytes, true).unwrap();
 
     let statement = inputs.theorem.clone() + "\n" + &inputs.solution;
-    let statement_for_hashing =
-        abi::encode(&(inputs.theorem.tokenize(), inputs.solution.tokenize()));
 
-    let solution_hash = keccak256(statement_for_hashing);
+    let solution_hash = keccak256((inputs.theorem, inputs.solution).abi_encode());
 
     // Run the computation.
     // In this case, asserting that the provided number is even.

@@ -1,4 +1,4 @@
-# Lemma
+![Header](marketing/cover.png)
 
 **Lemma** is a ZK theorem proving framework that enables individuals to post unsolved theorem definitions accompanied by a bounty for anyone that can submit a valid Mathematical proof which solves the theorem. These proofs are validated on chain, and the bounties are trustlessly released to the solver.
 
@@ -28,6 +28,12 @@ This project includes the following components:
   - Integrates with Bonsai, Risc0's ZK CoProcessor
 
 ## Features
+
+## Showcase
+
+![Market](marketing/screenshots/market.png)
+![Submit Bounty](marketing/screenshots/submit_bounty.png)
+![Submit Proof](marketing/screenshots/submit_proof.png)
 
 ## Getting Started
 

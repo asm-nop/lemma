@@ -160,9 +160,13 @@ export const TheoremProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (account) {
-      updateTheorems();
-    }
+    const fetchTheoremsInBackground = async () => {
+      if (account) {
+        updateTheorems(); // Fetch theorems without blocking the UI
+      }
+    };
+
+    fetchTheoremsInBackground();
   }, [account]);
 
   const contextValue: TheoremContextType = {

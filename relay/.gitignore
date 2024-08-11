@@ -1,0 +1,8 @@
+/target
+
+.*
+!.gitignore
+!.github
+!.editorconfig
+!.dockerignore
+!.cargo

@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use alloy_primitives::FixedBytes;
-use alloy_sol_types::SolValue;
 use core::{Inputs, Outputs};
+use std::io::Read;
+
+use alloy_primitives::FixedBytes;
+use alloy_sol_types::{abi, SolValue};
 use mini_proost::process_input;
 use risc0_zkvm::guest::env;
 use risc0_zkvm::sha::{Impl, Sha256};
-use std::io::Read;
 
 fn main() {
     let mut input_bytes = Vec::<u8>::new();
@@ -26,9 +27,10 @@ fn main() {
     // Decode and parse the input
     let inputs = <Inputs>::abi_decode(&input_bytes, true).unwrap();
 
-    let statement = inputs.theorem + "\n" + &inputs.solution;
+    let statement = inputs.theorem.clone() + "\n" + &inputs.solution;
+    let statement_for_hashing = abi::encode(&(inputs.theorem.tokenize(), inputs.solution.tokenize()));
 
-    let sha = *Impl::hash_bytes(statement.as_bytes());
+    let sha = *Impl::hash_bytes(statement_for_hashing.as_slice());
 
     // Run the computation.
     // In this case, asserting that the provided number is even.
